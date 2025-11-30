@@ -12,9 +12,9 @@ fi
 
 if [ ! $(which depsync) ]; then
   echo "depsync not found. Trying to install..."
-  npm install -g depsync > /dev/null
+  sudo npm install -g depsync
 else
-  npm update -g depsync > /dev/null
+  sudo npm update -g depsync > /dev/null
 fi
 
 depsync || exit 1

@@ -1,0 +1,85 @@
+/////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//  Tencent is pleased to support the open source community by making libpag available.
+//
+//  Copyright (C) 2021 Tencent. All rights reserved.
+//
+//  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+//  except in compliance with the License. You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+//  unless required by applicable law or agreed to in writing, software distributed under the
+//  license is distributed on an "as is" basis, without warranties or conditions of any kind,
+//  either express or implied. see the license for the specific language governing permissions
+//  and limitations under the license.
+//
+/////////////////////////////////////////////////////////////////////////////////////////////////
+
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
+#include <pybind11/numpy.h>
+#include "pag/pag.h"
+
+namespace py = pybind11;
+
+// 前向声明绑定函数
+void bind_pag_file(py::module& m);
+void bind_pag_surface(py::module& m);
+void bind_pag_player(py::module& m);
+void bind_pag_image(py::module& m);
+void bind_pag_layer(py::module& m);
+
+PYBIND11_MODULE(pypag, m) {
+    m.doc() = "Python bindings for libpag - Portable Animated Graphics";
+
+    // 绑定基础类型
+    py::class_<pag::Rect>(m, "Rect")
+        .def(py::init<>())
+        .def(py::init<float, float, float, float>())
+        .def_readwrite("left", &pag::Rect::left)
+        .def_readwrite("top", &pag::Rect::top)
+        .def_readwrite("right", &pag::Rect::right)
+        .def_readwrite("bottom", &pag::Rect::bottom)
+        .def("width", [](const pag::Rect& r) { return r.right - r.left; })
+        .def("height", [](const pag::Rect& r) { return r.bottom - r.top; })
+        .def("__repr__", [](const pag::Rect& r) {
+            return "Rect(left=" + std::to_string(r.left) + 
+                   ", top=" + std::to_string(r.top) + 
+                   ", right=" + std::to_string(r.right) + 
+                   ", bottom=" + std::to_string(r.bottom) + ")";
+        });
+
+    py::class_<pag::Point>(m, "Point")
+        .def(py::init<>())
+        .def(py::init<float, float>())
+        .def_readwrite("x", &pag::Point::x)
+        .def_readwrite("y", &pag::Point::y)
+        .def("__repr__", [](const pag::Point& p) {
+            return "Point(x=" + std::to_string(p.x) + ", y=" + std::to_string(p.y) + ")";
+        });
+
+    py::class_<pag::Color>(m, "Color")
+        .def(py::init<>())
+        .def(py::init<uint8_t, uint8_t, uint8_t, uint8_t>())
+        .def_readwrite("red", &pag::Color::red)
+        .def_readwrite("green", &pag::Color::green)
+        .def_readwrite("blue", &pag::Color::blue)
+        .def_readwrite("alpha", &pag::Color::alpha)
+        .def("__repr__", [](const pag::Color& c) {
+            return "Color(r=" + std::to_string(c.red) + 
+                   ", g=" + std::to_string(c.green) + 
+                   ", b=" + std::to_string(c.blue) + 
+                   ", a=" + std::to_string(c.alpha) + ")";
+        });
+
+    // 绑定各个模块
+    bind_pag_file(m);
+    bind_pag_surface(m);
+    bind_pag_player(m);
+    bind_pag_image(m);
+    bind_pag_layer(m);
+
+    // 版本信息
+    m.attr("__version__") = "0.1.0";
+}

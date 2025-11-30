@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PAG 播放器 & 编辑器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr 350px;
+            gap: 20px;
+            padding: 20px;
+            min-height: 600px;
+        }
+
+        .sidebar {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            overflow-y: auto;
+            max-height: calc(100vh - 200px);
+        }
+
+        .sidebar h2 {
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+
+        .file-list {
+            list-style: none;
+        }
+
+        .file-item {
+            background: white;
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .file-item:hover {
+            border-color: #667eea;
+            transform: translateX(5px);
+        }
+
+        .file-item .name {
+            font-weight: 500;
+            flex: 1;
+        }
+
+        .file-item .add-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+
+        .file-item .add-btn:hover {
+            background: #5568d3;
+        }
+
+        .player-area {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .preview-container {
+            flex: 1;
+            background: #1a1a1a;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            min-height: 400px;
+            overflow: hidden;
+        }
+
+        .preview-container img {
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            border-radius: 10px;
+            object-fit: contain;
+            background: rgba(255, 255, 255, 0.05);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            display: block;
+        }
+
+        .preview-placeholder {
+            color: #aaa;
+            text-align: center;
+            font-size: 1.2em;
+        }
+
+        .controls {
+            margin-top: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .progress-bar .progress {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.1s;
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d0d0d0;
+        }
+
+        .playlist {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            overflow-y: auto;
+            max-height: calc(100vh - 200px);
+        }
+
+        .playlist h2 {
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            color: #667eea;
+        }
+
+        .playlist-item {
+            background: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .playlist-item:hover {
+            border-color: #667eea;
+        }
+
+        .playlist-item.active {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .playlist-item.edited {
+            border-left: 4px solid #ff9800;
+        }
+
+        .playlist-item .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .playlist-item .name {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .playlist-item .badge {
+            background: #ff9800;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75em;
+        }
+
+        .playlist-item .info {
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .playlist-item .actions {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .playlist-item .actions button {
+            flex: 1;
+            padding: 5px;
+            font-size: 0.85em;
+        }
+
+        .editor-panel {
+            background: white;
+            padding: 15px;
+            margin-top: 10px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .editor-panel h3 {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            color: #667eea;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 0.9em;
+        }
+
+        .form-group input[type="color"] {
+            height: 40px;
+            cursor: pointer;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .info-display {
+            background: #f0f4ff;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        .info-display span {
+            display: inline-block;
+            margin-right: 15px;
+        }
+
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎬 PAG 播放器 & 编辑器</h1>
+            <p>加载、编辑、播放 PAG 动画文件</p>
+        </header>
+
+        <div class="main-content">
+            <!-- 左侧：文件列表 -->
+            <div class="sidebar">
+                <h2>📁 可用文件</h2>
+                <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+                    <button class="btn btn-secondary" onclick="toggleSelectAll()" style="flex: 1; padding: 5px; font-size: 0.85em;">☑️ 全选</button>
+                    <button class="btn btn-primary" onclick="addSelectedFiles()" style="flex: 1; padding: 5px; font-size: 0.85em;">➕ 添加选中</button>
+                </div>
+                <ul class="file-list" id="fileList">
+                    <li class="loading">加载中...</li>
+                </ul>
+            </div>
+
+            <!-- 中间：播放器 -->
+            <div class="player-area">
+                <div class="preview-container" id="previewContainer">
+                    <div class="preview-placeholder">
+                        选择播放列表中的 PAG 文件开始播放
+                    </div>
+                </div>
+
+                <div class="info-display" id="infoDisplay" style="display: none;">
+                    <span><strong>文件:</strong> <span id="currentName">-</span></span>
+                    <span><strong>尺寸:</strong> <span id="currentSize">-</span></span>
+                    <span><strong>时长:</strong> <span id="currentDuration">-</span></span>
+                    <span><strong>帧率:</strong> <span id="currentFps">-</span></span>
+                </div>
+
+                <div class="controls">
+                    <div class="progress-bar" id="progressBar">
+                        <div class="progress" id="progress"></div>
+                    </div>
+                    <div class="control-buttons">
+                        <button class="btn btn-secondary" id="prevBtn">⏮ 上一个</button>
+                        <button class="btn btn-primary" id="playBtn">▶ 播放</button>
+                        <button class="btn btn-secondary" id="nextBtn">⏭ 下一个</button>
+                        <button class="btn btn-secondary" id="stopBtn">⏹ 停止</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧：播放列表 -->
+            <div class="playlist">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h2 style="margin: 0;">📋 播放列表</h2>
+                    <button class="btn btn-secondary" onclick="clearPlaylist()" style="padding: 5px 12px; font-size: 0.9em;">🗑️ 清空</button>
+                </div>
+                <div id="playlistContainer">
+                    <div class="loading">播放列表为空</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let playlist = [];
+        let currentIndex = -1;
+        let isPlaying = false;
+        let playInterval = null;
+        let currentProgress = 0;
+        let openEditors = new Set(); // 记录展开的编辑面板
+        let previewStates = {}; // 保存每个图片的预览状态 {"pagId-imageIndex": {dataUrl, width, height, size, name}}
+
+        // 加载可用文件列表
+        async function loadFileList() {
+            try {
+                const response = await fetch('/api/list-files');
+                const data = await response.json();
+                
+                const fileList = document.getElementById('fileList');
+                fileList.innerHTML = '';
+                
+                data.files.forEach(file => {
+                    const li = document.createElement('li');
+                    li.className = 'file-item';
+                    li.innerHTML = `
+                        <input type="checkbox" class="file-checkbox" value="${file.path}" style="margin-right: 8px;">
+                        <span class="name" style="flex: 1;">${file.name}</span>
+                        <button class="add-btn" onclick="loadPagFile('${file.path}')">+</button>
+                    `;
+                    li.style.display = 'flex';
+                    li.style.alignItems = 'center';
+                    fileList.appendChild(li);
+                });
+            } catch (error) {
+                console.error('加载文件列表失败:', error);
+            }
+        }
+
+        // 全选/取消全选
+        function toggleSelectAll() {
+            const checkboxes = document.querySelectorAll('.file-checkbox');
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            checkboxes.forEach(cb => cb.checked = !allChecked);
+        }
+
+        // 添加选中的文件
+        async function addSelectedFiles() {
+            const checkboxes = document.querySelectorAll('.file-checkbox:checked');
+            
+            if (checkboxes.length === 0) {
+                alert('请先选择文件');
+                return;
+            }
+            
+            // 批量加载
+            for (const checkbox of checkboxes) {
+                await loadPagFile(checkbox.value);
+            }
+            
+            // 取消选中状态
+            checkboxes.forEach(cb => cb.checked = false);
+        }
+
+        // 加载 PAG 文件到播放列表
+        async function loadPagFile(path) {
+            try {
+                const response = await fetch('/api/load', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({path})
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    alert('加载失败: ' + data.error);
+                    return;
+                }
+                
+                await refreshPlaylist();
+                
+                // 如果这是第一个文件，自动选中并显示
+                if (currentIndex < 0 && playlist.length > 0) {
+                    currentIndex = 0;
+                    currentProgress = 0;
+                    renderPlaylist();
+                    updatePreview();
+                }
+            } catch (error) {
+                console.error('加载 PAG 失败:', error);
+                alert('加载失败');
+            }
+        }
+
+        // 刷新播放列表
+        async function refreshPlaylist() {
+            try {
+                const response = await fetch('/api/playlist');
+                const data = await response.json();
+                
+                playlist = data.playlist;
+                renderPlaylist();
+            } catch (error) {
+                console.error('刷新播放列表失败:', error);
+            }
+        }
+
+        // 渲染播放列表
+        function renderPlaylist() {
+            const container = document.getElementById('playlistContainer');
+            
+            if (playlist.length === 0) {
+                container.innerHTML = '<div class="loading">播放列表为空</div>';
+                return;
+            }
+            
+            container.innerHTML = '';
+            
+            playlist.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'playlist-item' + (index === currentIndex ? ' active' : '') + (item.edited ? ' edited' : '');
+                div.innerHTML = `
+                    <div class="header">
+                        <span class="name">${index + 1}. ${item.name}</span>
+                        ${item.edited ? '<span class="badge">已编辑</span>' : ''}
+                    </div>
+                    <div class="info">
+                        ${item.width}x${item.height} | ${item.duration.toFixed(2)}s | ${item.frameRate}fps
+                    </div>
+                    <div class="info">
+                        文本: ${item.numTexts} | 图片: ${item.numImages}
+                    </div>
+                    <div class="actions">
+                        <button class="btn btn-primary" onclick="playItem(${index})">播放</button>
+                        <button class="btn btn-secondary" onclick="editItem(${index})">编辑</button>
+                        <button class="btn btn-secondary" onclick="removeItem(${item.id})">移除</button>
+                    </div>
+                    <div id="editor-${item.id}" style="display:none;"></div>
+                `;
+                container.appendChild(div);
+            });
+            
+            // 恢复之前展开的编辑面板
+            openEditors.forEach(pagId => {
+                const itemIndex = playlist.findIndex(item => item.id === pagId);
+                if (itemIndex >= 0) {
+                    // 延迟执行以确保 DOM 已渲染
+                    setTimeout(() => {
+                        editItem(itemIndex);
+                        // 再延迟一点恢复预览状态
+                        setTimeout(() => restorePreviewStates(pagId), 10);
+                    }, 0);
+                }
+            });
+        }
+
+        // 播放指定项
+        function playItem(index) {
+            if (index < 0 || index >= playlist.length) return;
+            
+            currentIndex = index;
+            currentProgress = 0;
+            renderPlaylist();
+            updatePreview();
+            
+            if (!isPlaying) {
+                togglePlay();
+            }
+        }
+
+        // 编辑项
+        function editItem(index) {
+            const item = playlist[index];
+            const editorDiv = document.getElementById(`editor-${item.id}`);
+            
+            // 如果编辑面板已经展开，不要重新生成 HTML（避免覆盖用户正在操作的内容）
+            if (editorDiv.style.display === 'block') {
+                return;
+            }
+            
+            if (editorDiv.style.display === 'none') {
+                // 显示编辑面板
+                openEditors.add(item.id);
+                let html = '<div class="editor-panel">';
+                
+                // 文本编辑
+                if (item.texts && item.texts.length > 0) {
+                    html += '<h3>✏️ 文本编辑</h3>';
+                    item.texts.forEach(text => {
+                        html += `
+                            <div class="form-group">
+                                <label>文本 ${text.index}: ${text.text}</label>
+                                <input type="text" id="text-${item.id}-${text.index}" value="${text.text}" placeholder="新文本">
+                            </div>
+                            <div class="form-group">
+                                <label>字号</label>
+                                <input type="number" id="fontSize-${item.id}-${text.index}" value="${text.fontSize}" placeholder="字号">
+                            </div>
+                            <div class="form-group">
+                                <label>颜色</label>
+                                <input type="color" id="color-${item.id}-${text.index}" value="${rgbToHex(text.fillColor.r, text.fillColor.g, text.fillColor.b)}">
+                            </div>
+                            <button class="btn btn-primary" onclick="updateText(${item.id}, ${text.index})">更新文本</button>
+                            <hr style="margin: 15px 0;">
+                        `;
+                    });
+                }
+                
+                // 图片编辑
+                if (item.images && item.images.length > 0) {
+                    html += '<h3>🖼️ 图片编辑</h3>';
+                    item.images.forEach(img => {
+                        html += `
+                            <div class="form-group">
+                                <label>图片 ${img.index}${img.replaced ? ' <span style="color: #ff9800;">✓ 已替换</span>' : ''}</label>
+                        `;
+                        
+                        // 如果已替换，显示当前图片
+                        if (img.replaced && img.previewUrl) {
+                            html += `
+                                <div style="margin: 10px 0; padding: 10px; background: #f5f5f5; border-radius: 4px;">
+                                    <div style="font-size: 12px; color: #666; margin-bottom: 5px;">当前图片: ${img.filename || '未知'}</div>
+                                    <img src="${img.previewUrl}?t=${Date.now()}" style="max-width: 200px; max-height: 200px; border: 1px solid #ddd; border-radius: 4px; display: block;">
+                                </div>
+                            `;
+                        }
+                        
+                        html += `
+                                <input type="file" id="image-${item.id}-${img.index}" accept="image/*" onchange="previewImage(${item.id}, ${img.index}, event)">
+                                <div id="preview-${item.id}-${img.index}" style="margin-top: 10px; display: none;">
+                                    <div style="font-size: 12px; color: #666; margin-bottom: 5px;">新图片预览:</div>
+                                    <img id="preview-img-${item.id}-${img.index}" style="max-width: 200px; max-height: 200px; border: 1px solid #555; border-radius: 4px; display: block; margin-bottom: 5px;">
+                                    <div id="preview-info-${item.id}-${img.index}" style="font-size: 12px; color: #888;"></div>
+                                </div>
+                                <button class="btn btn-primary" onclick="updateImage(${item.id}, ${img.index})" style="margin-top: 5px;">${img.replaced ? '重新上传图片' : '上传图片'}</button>
+                            </div>
+                            <hr style="margin: 15px 0;">
+                        `;
+                    });
+                }
+                
+                html += `
+                    <div style="margin-top: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button class="btn btn-primary" onclick="exportConfig(${item.id})">📥 导出配置</button>
+                        <button class="btn btn-primary" onclick="document.getElementById('import-config-${item.id}').click()">📤 导入配置</button>
+                        <input type="file" id="import-config-${item.id}" accept="application/json,.json" style="display: none;" onchange="importConfig(${item.id}, event)">
+                        <button class="btn btn-secondary" onclick="resetPag(${item.id})">🔄 重置到原始</button>
+                    </div>
+                `;
+                html += '</div>';
+                
+                editorDiv.innerHTML = html;
+                editorDiv.style.display = 'block';
+            } else {
+                editorDiv.style.display = 'none';
+                openEditors.delete(item.id);
+            }
+        }
+
+        // 更新文本
+        async function updateText(pagId, textIndex) {
+            const text = document.getElementById(`text-${pagId}-${textIndex}`).value;
+            const fontSize = document.getElementById(`fontSize-${pagId}-${textIndex}`).value;
+            const colorHex = document.getElementById(`color-${pagId}-${textIndex}`).value;
+            const color = hexToRgb(colorHex);
+            
+            try {
+                const response = await fetch('/api/edit/text', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        pag_id: pagId,
+                        index: textIndex,
+                        text: text,
+                        fontSize: parseFloat(fontSize),
+                        color: color
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    await refreshPlaylist();
+                    // 添加延迟确保服务器端缓存已清除
+                    setTimeout(() => {
+                        updatePreview();
+                    }, 100);
+                } else {
+                    alert('更新失败: ' + data.error);
+                }
+            } catch (error) {
+                console.error('更新文本失败:', error);
+                alert('更新失败');
+            }
+        }
+
+        // 预览图片
+        // 预览图片
+        function previewImage(pagId, imageIndex, event) {
+            const file = event && event.target && event.target.files ? event.target.files[0] : null;
+            
+            if (!file) {
+                return;
+            }
+            
+            const previewContainer = document.getElementById(`preview-${pagId}-${imageIndex}`);
+            const previewImg = document.getElementById(`preview-img-${pagId}-${imageIndex}`);
+            const previewInfo = document.getElementById(`preview-info-${pagId}-${imageIndex}`);
+            
+            if (!previewContainer || !previewImg || !previewInfo) {
+                console.error('[预览] 找不到预览元素');
+                return;
+            }
+            
+            // 读取文件并显示预览
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImg.src = e.target.result;
+                
+                // 获取图片尺寸
+                const img = new Image();
+                img.onload = function() {
+                    const sizeKB = (file.size / 1024).toFixed(2);
+                    previewInfo.textContent = `${img.width} x ${img.height} | ${sizeKB} KB | ${file.type}`;
+                    
+                    // 保存预览状态到全局变量
+                    const key = `${pagId}-${imageIndex}`;
+                    previewStates[key] = {
+                        dataUrl: e.target.result,
+                        width: img.width,
+                        height: img.height,
+                        size: file.size,
+                        name: file.name,
+                        type: file.type
+                    };
+                };
+                img.src = e.target.result;
+                
+                previewContainer.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // 恢复预览状态
+        function restorePreviewStates(pagId) {
+            const item = playlist.find(i => i.id === pagId);
+            if (!item || !item.editableImages) return;
+            
+            item.editableImages.forEach((img, index) => {
+                const key = `${pagId}-${index}`;
+                const state = previewStates[key];
+                
+                if (state) {
+                    const previewContainer = document.getElementById(`preview-${pagId}-${index}`);
+                    const previewImg = document.getElementById(`preview-img-${pagId}-${index}`);
+                    const previewInfo = document.getElementById(`preview-info-${pagId}-${index}`);
+                    
+                    if (previewContainer && previewImg && previewInfo) {
+                        previewImg.src = state.dataUrl;
+                        const sizeKB = (state.size / 1024).toFixed(2);
+                        previewInfo.textContent = `${state.width} x ${state.height} | ${sizeKB} KB | ${state.type}`;
+                        previewContainer.style.display = 'block';
+                    }
+                }
+            });
+        }
+
+        // 更新图片
+        async function updateImage(pagId, imageIndex) {
+            const fileInput = document.getElementById(`image-${pagId}-${imageIndex}`);
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                alert('请选择图片文件');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('pag_id', pagId);
+            formData.append('index', imageIndex);
+            formData.append('image', file);
+            
+            try {
+                const response = await fetch('/api/edit/image', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // 先刷新播放列表（会重新创建编辑面板和文件选择框）
+                    await refreshPlaylist();
+                    // 添加延迟确保服务器端缓存已清除
+                    setTimeout(() => {
+                        updatePreview();
+                    }, 100);
+                } else {
+                    alert('更新失败: ' + data.error);
+                }
+            } catch (error) {
+                console.error('更新图片失败:', error);
+                alert('更新失败');
+            }
+        }
+
+        // 重置 PAG
+        async function resetPag(pagId) {
+            if (!confirm('确定要重置到原始状态吗？')) return;
+            
+            try {
+                const response = await fetch(`/api/reset/${pagId}`, {method: 'POST'});
+                const data = await response.json();
+                
+                if (data.success) {
+                    // 清除该 PAG 的所有预览状态
+                    Object.keys(previewStates).forEach(key => {
+                        if (key.startsWith(`${pagId}-`)) {
+                            delete previewStates[key];
+                        }
+                    });
+                    
+                    await refreshPlaylist();
+                    updatePreview();
+                    alert('重置成功');
+                } else {
+                    alert('重置失败: ' + (data.error || '未知错误'));
+                }
+            } catch (error) {
+                console.error('重置失败:', error);
+                alert('重置失败: ' + error.message);
+            }
+        }
+
+        // 导出配置
+        async function exportConfig(pagId) {
+            try {
+                const response = await fetch(`/api/export-config/${pagId}`);
+                
+                if (!response.ok) {
+                    const data = await response.json();
+                    alert('导出失败: ' + (data.error || '未知错误'));
+                    return;
+                }
+                
+                // 获取文件名
+                const contentDisposition = response.headers.get('Content-Disposition');
+                let filename = 'pag_config.json';
+                if (contentDisposition) {
+                    const match = contentDisposition.match(/filename="(.+)"/);
+                    if (match) filename = match[1];
+                }
+                
+                // 下载文件
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                
+                alert('配置导出成功！');
+            } catch (error) {
+                console.error('导出配置失败:', error);
+                alert('导出配置失败: ' + error.message);
+            }
+        }
+
+        // 导入配置
+        async function importConfig(pagId, event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            try {
+                const formData = new FormData();
+                formData.append('config', file);
+                
+                const response = await fetch(`/api/import-config/${pagId}`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    await refreshPlaylist();
+                    updatePreview();
+                    alert('配置导入成功！');
+                } else {
+                    alert('导入失败: ' + (data.error || '未知错误'));
+                }
+            } catch (error) {
+                console.error('导入配置失败:', error);
+                alert('导入配置失败: ' + error.message);
+            } finally {
+                // 清空文件选择，允许重复导入同一文件
+                if (event && event.target) {
+                    event.target.value = '';
+                }
+            }
+        }
+
+        // 清空播放列表
+        async function clearPlaylist() {
+            if (playlist.length === 0) {
+                alert('播放列表已经是空的');
+                return;
+            }
+            
+            if (!confirm(`确定要清空播放列表吗？将移除所有 ${playlist.length} 个文件。`)) return;
+            
+            try {
+                // 停止播放
+                if (isPlaying) {
+                    togglePlay();
+                }
+                
+                // 移除所有项
+                const removePromises = playlist.map(item => 
+                    fetch(`/api/remove/${item.id}`, {method: 'DELETE'})
+                );
+                
+                await Promise.all(removePromises);
+                
+                // 重置状态
+                playlist = [];
+                currentIndex = -1;
+                currentProgress = 0;
+                
+                // 刷新显示
+                renderPlaylist();
+                document.getElementById('previewContainer').innerHTML = '<div class="preview-placeholder">选择播放列表中的 PAG 文件开始播放</div>';
+            } catch (error) {
+                console.error('清空播放列表失败:', error);
+                alert('清空失败');
+            }
+        }
+
+        // 移除项
+        async function removeItem(pagId) {
+            if (!confirm('确定要移除吗？')) return;
+            
+            try {
+                const response = await fetch(`/api/remove/${pagId}`, {method: 'DELETE'});
+                const result = await response.json();
+                
+                // 刷新播放列表
+                await refreshPlaylist();
+                
+                // 如果移除的是当前播放项之前的，调整索引
+                if (currentIndex >= playlist.length) {
+                    currentIndex = playlist.length - 1;
+                }
+                
+                // 停止播放
+                if (isPlaying) {
+                    togglePlay();
+                }
+                
+                if (currentIndex >= 0 && playlist.length > 0) {
+                    updatePreview();
+                } else {
+                    currentIndex = -1;
+                    clearPreview();
+                }
+            } catch (error) {
+                console.error('[移除] 失败:', error);
+                alert('移除失败: ' + error.message);
+            }
+        }
+
+        // 更新预览
+        async function updatePreview() {
+            if (currentIndex < 0 || currentIndex >= playlist.length) {
+                clearPreview();
+                return;
+            }
+            
+            const item = playlist[currentIndex];
+            
+            // 更新信息显示
+            document.getElementById('infoDisplay').style.display = 'block';
+            document.getElementById('currentName').textContent = item.name;
+            document.getElementById('currentSize').textContent = `${item.width}x${item.height}`;
+            document.getElementById('currentDuration').textContent = `${item.duration.toFixed(2)}s`;
+            document.getElementById('currentFps').textContent = `${item.frameRate}fps`;
+            
+            // 渲染帧 - 使用固定的 img 元素，只更新 src
+            const container = document.getElementById('previewContainer');
+            let img = container.querySelector('img');
+            
+            if (!img) {
+                // 第一次创建图片元素
+                img = document.createElement('img');
+                img.style.maxWidth = '100%';
+                img.style.maxHeight = '100%';
+                img.style.objectFit = 'contain';
+                container.innerHTML = '';
+                container.appendChild(img);
+            }
+            
+            // 更新图片源（添加随机数防止缓存）
+            const imgUrl = `/api/render/${item.id}?progress=${currentProgress}&_=${Date.now()}`;
+            img.src = imgUrl;
+            
+            // 更新进度条
+            document.getElementById('progress').style.width = (currentProgress * 100) + '%';
+        }
+
+        // 清空预览
+        function clearPreview() {
+            document.getElementById('previewContainer').innerHTML = '<div class="preview-placeholder">选择播放列表中的 PAG 文件开始播放</div>';
+            document.getElementById('infoDisplay').style.display = 'none';
+            document.getElementById('progress').style.width = '0%';
+        }
+
+        // 播放/暂停
+        function togglePlay() {
+            if (currentIndex < 0 || currentIndex >= playlist.length) {
+                return;
+            }
+            
+            isPlaying = !isPlaying;
+            const playBtn = document.getElementById('playBtn');
+            
+            if (isPlaying) {
+                playBtn.textContent = '⏸ 暂停';
+                startPlayback();
+            } else {
+                playBtn.textContent = '▶ 播放';
+                stopPlayback();
+            }
+        }
+
+        // 开始播放
+        function startPlayback() {
+            if (playInterval) clearInterval(playInterval);
+            
+            if (currentIndex < 0 || currentIndex >= playlist.length) return;
+            
+            const item = playlist[currentIndex];
+            // 使用较低的播放帧率以适应渲染速度（最低 5fps，最高 15fps）
+            const displayFps = Math.max(5, Math.min(15, item.frameRate / 3));
+            const interval = 1000 / displayFps;
+            // 根据实际时长计算每次更新的进度增量
+            // 每秒应该增加的进度 = 1 / duration
+            // 每次interval应该增加的进度 = (1 / duration) * (interval / 1000)
+            const progressStep = (1 / item.duration) * (interval / 1000);
+            
+            playInterval = setInterval(() => {
+                currentProgress += progressStep;
+                
+                if (currentProgress >= 1) {
+                    // 先停止当前 interval，防止累积
+                    clearInterval(playInterval);
+                    playInterval = null;
+                    
+                    // 自动播放下一个
+                    if (currentIndex < playlist.length - 1) {
+                        currentIndex++;
+                    } else {
+                        // 循环播放，回到第一个
+                        currentIndex = 0;
+                    }
+                    
+                    // 重置进度到开始
+                    currentProgress = 0;
+                    
+                    // 清除当前视频的渲染缓存
+                    const currentItem = playlist[currentIndex];
+                    fetch(`/api/clear-cache/${currentItem.id}`, {method: 'POST'}).catch(err => {
+                        console.error('清除缓存失败:', err);
+                    });
+                    
+                    renderPlaylist();
+                    
+                    // 延迟一小段时间，确保缓存清除后再开始播放
+                    setTimeout(() => {
+                        updatePreview();
+                        startPlayback();
+                    }, 100);
+                    return;
+                }
+                
+                updatePreview();
+            }, interval);
+        }
+
+        // 停止播放
+        function stopPlayback() {
+            if (playInterval) {
+                clearInterval(playInterval);
+                playInterval = null;
+            }
+        }
+
+        // 上一个/下一个
+        function prevItem() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                currentProgress = 0;
+                renderPlaylist();
+                updatePreview();
+                // 如果正在播放，重新启动以使用新视频的参数
+                if (isPlaying) {
+                    startPlayback();
+                }
+            }
+        }
+
+        function nextItem() {
+            if (currentIndex < playlist.length - 1) {
+                currentIndex++;
+                currentProgress = 0;
+                renderPlaylist();
+                updatePreview();
+                // 如果正在播放，重新启动以使用新视频的参数
+                if (isPlaying) {
+                    startPlayback();
+                }
+            }
+        }
+
+        // 停止
+        function stopAll() {
+            isPlaying = false;
+            stopPlayback();
+            currentProgress = 0;
+            document.getElementById('playBtn').textContent = '▶ 播放';
+            updatePreview();
+        }
+
+        // 进度条点击
+        document.getElementById('progressBar').addEventListener('click', function(e) {
+            const rect = this.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            currentProgress = x / rect.width;
+            updatePreview();
+        });
+
+        // 辅助函数
+        function rgbToHex(r, g, b) {
+            return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        }
+
+        function hexToRgb(hex) {
+            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+            return result ? {
+                r: parseInt(result[1], 16),
+                g: parseInt(result[2], 16),
+                b: parseInt(result[3], 16)
+            } : null;
+        }
+
+        // 绑定按钮事件
+        document.getElementById('playBtn').addEventListener('click', togglePlay);
+        document.getElementById('prevBtn').addEventListener('click', prevItem);
+        document.getElementById('nextBtn').addEventListener('click', nextItem);
+        document.getElementById('stopBtn').addEventListener('click', stopAll);
+
+        // 初始化
+        loadFileList();
+        refreshPlaylist();
+    </script>
+</body>
+</html>
