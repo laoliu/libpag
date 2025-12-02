@@ -19,6 +19,7 @@
 #include "pag/file.h"
 #include <algorithm>
 #include <unordered_map>
+#include "codec/utils/WebpDecoder.h"
 
 namespace pag {
 
@@ -201,6 +202,56 @@ TextDocumentHandle File::getTextData(int index) const {
   auto textData = new TextDocument();
   *textData = *textDocument;
   return TextDocumentHandle(textData);
+}
+
+void File::setTextData(int index, std::shared_ptr<TextDocument> textData) {
+  if (index < 0 || static_cast<size_t>(index) >= textLayers.size() || !textData) {
+    return;
+  }
+  auto textLayer = textLayers[index];
+  if (textLayer->sourceText && textLayer->sourceText->value) {
+    // 直接修改 sourceText 的值
+    *textLayer->sourceText->value = *textData;
+  }
+}
+
+void File::setImageData(int index, ByteData* imageBytes, int width, int height) {
+  if (index < 0 || static_cast<size_t>(index) >= imageLayers.size() || !imageBytes) {
+    return;
+  }
+  
+  // 获取该索引对应的所有 ImageLayer（共享同一个 ImageBytes）
+  auto& layers = imageLayers[index];
+  if (layers.empty()) {
+    return;
+  }
+  
+  // 获取第一个 layer 的 imageBytes
+  auto oldImageBytes = layers[0]->imageBytes;
+  if (!oldImageBytes) {
+    return;
+  }
+  
+  // 删除旧的 fileBytes
+  delete oldImageBytes->fileBytes;
+  
+  // 复制新的图片数据
+  auto newBytes = new uint8_t[imageBytes->length()];
+  memcpy(newBytes, imageBytes->data(), imageBytes->length());
+  oldImageBytes->fileBytes = ByteData::MakeAdopted(newBytes, imageBytes->length()).release();
+  
+  // 更新尺寸
+  oldImageBytes->width = width;
+  oldImageBytes->height = height;
+  
+  // 从 WebP 数据中获取实际的编码尺寸
+  int encodedWidth = 0, encodedHeight = 0;
+  if (WebPGetInfo(oldImageBytes->fileBytes->data(), oldImageBytes->fileBytes->length(),
+                  &encodedWidth, &encodedHeight)) {
+    // WebP 编码尺寸应该等于 width * scaleFactor 和 height * scaleFactor
+    // 这里我们假设 scaleFactor 为 1.0（对于替换图片通常是这样的）
+    oldImageBytes->scaleFactor = 1.0f;
+  }
 }
 
 PreComposeLayer* File::getRootLayer() const {

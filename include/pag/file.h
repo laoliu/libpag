@@ -2455,6 +2455,22 @@ class PAG_API File {
    */
   TextDocumentHandle getTextData(int index) const;
 
+  /**
+   * Set text data at the specified index. This directly modifies the underlying File data.
+   * The index ranges from 0 to numTexts - 1.
+   */
+  void setTextData(int index, std::shared_ptr<TextDocument> textData);
+
+  /**
+   * Set image data at the specified index. This directly modifies the underlying File data.
+   * The index ranges from 0 to numImages - 1.
+   * @param index The index of the image to set
+   * @param imageBytes The new image bytes (WebP format, will be copied)
+   * @param width The width of the image
+   * @param height The height of the image
+   */
+  void setImageData(int index, ByteData* imageBytes, int width, int height);
+
   PreComposeLayer* getRootLayer() const;
 
   TextLayer* getTextAt(int index) const;

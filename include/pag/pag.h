@@ -150,6 +150,14 @@ class PAG_API PAGImage {
    */
   void setMatrix(const Matrix& matrix);
 
+  /**
+   * Encodes the PAGImage to WebP format bytes. Returns nullptr if encoding fails.
+   * This is useful for saving modified images back to PAG files.
+   * Note: Only works for images created from FromPath() or FromBytes().
+   * Returns nullptr for images from FromPixels(), FromTexture(), or other sources.
+   */
+  ByteData* toBytes() const;
+
  protected:
   PAGImage(int width, int height);
 
@@ -776,6 +784,12 @@ class PAG_API PAGImageLayer : public PAGLayer {
    * The default image data of this layer, which is webp format.
    */
   ByteData* imageBytes() const;
+
+  /**
+   * Returns the current replaced image if any, otherwise returns nullptr.
+   * This method can be used to get the image set by replaceImage() or setImage().
+   */
+  std::shared_ptr<PAGImage> getReplacedImage() const;
 
  protected:
   bool gotoTime(int64_t layerTime) override;

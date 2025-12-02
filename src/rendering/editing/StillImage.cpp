@@ -27,14 +27,29 @@
 
 namespace pag {
 std::shared_ptr<PAGImage> PAGImage::FromPath(const std::string& filePath) {
-  auto image = tgfx::Image::MakeFromFile(filePath);
-  return StillImage::MakeFrom(std::move(image));
+  auto data = tgfx::Data::MakeFromFile(filePath);
+  if (!data) {
+    return nullptr;
+  }
+  // 先创建图片（不移动 data）
+  auto image = tgfx::Image::MakeFromEncoded(data);
+  auto stillImage = StillImage::MakeFrom(std::move(image));
+  if (stillImage) {
+    // 保存原始字节数据
+    static_cast<StillImage*>(stillImage.get())->originalBytes = data;
+  }
+  return stillImage;
 }
 
 std::shared_ptr<PAGImage> PAGImage::FromBytes(const void* bytes, size_t length) {
   auto fileBytes = tgfx::Data::MakeWithCopy(bytes, length);
-  auto image = tgfx::Image::MakeFromEncoded(std::move(fileBytes));
-  return StillImage::MakeFrom(std::move(image));
+  auto image = tgfx::Image::MakeFromEncoded(fileBytes);
+  auto stillImage = StillImage::MakeFrom(std::move(image));
+  if (stillImage) {
+    // 保存原始字节数据
+    static_cast<StillImage*>(stillImage.get())->originalBytes = fileBytes;
+  }
+  return stillImage;
 }
 
 std::shared_ptr<PAGImage> PAGImage::FromPixels(const void* pixels, int width, int height,
@@ -74,5 +89,22 @@ std::shared_ptr<PAGImage> PAGImage::FromTexture(const BackendTexture& texture, I
   }
   pagImage->graphic = picture;
   return pagImage;
+}
+
+ByteData* PAGImage::toBytes() const {
+  // 只有 StillImage 支持导出字节数据
+  auto stillImage = dynamic_cast<const StillImage*>(this);
+  if (!stillImage || !stillImage->originalBytes) {
+    return nullptr;
+  }
+  
+  // 复制原始数据并返回
+  auto data = stillImage->originalBytes;
+  auto byteData = ByteData::Make(data->size()).release();
+  if (byteData) {
+    memcpy(const_cast<void*>(static_cast<const void*>(byteData->data())), 
+           data->data(), data->size());
+  }
+  return byteData;
 }
 }  // namespace pag

@@ -46,6 +46,7 @@ class StillImage : public PAGImage {
   }
 
   std::shared_ptr<Graphic> graphic = nullptr;
+  std::shared_ptr<tgfx::Data> originalBytes = nullptr;  // 保存原始图片数据
 
   friend class PAGImage;
 };

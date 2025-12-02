@@ -52,7 +52,9 @@ void bind_pag_file(py::module& m) {
     py::class_<pag::PAGImageLayer, pag::PAGLayer, std::shared_ptr<pag::PAGImageLayer>>(m, "PAGImageLayer")
         .def("replaceImage", &pag::PAGImageLayer::replaceImage)
         .def("setImage", &pag::PAGImageLayer::setImage)
-        .def("contentDuration", &pag::PAGImageLayer::contentDuration);
+        .def("contentDuration", &pag::PAGImageLayer::contentDuration)
+        .def("getReplacedImage", &pag::PAGImageLayer::getReplacedImage,
+             "Returns the current replaced image if any, otherwise returns None");
     
     // PAGComposition 基类
     py::class_<pag::PAGComposition, pag::PAGLayer, std::shared_ptr<pag::PAGComposition>>(m, "PAGComposition")
@@ -119,14 +121,59 @@ void bind_pag_file(py::module& m) {
              "Returns the file path")
         
         .def("save", [](pag::PAGFile& self, const std::string& filePath) -> bool {
-            auto file = self.getFile();
+            // 创建原始文件的副本
+            auto copiedFile = self.copyOriginal();
+            if (!copiedFile) {
+                return false;
+            }
+            
+            // 获取副本的 File 对象
+            auto file = copiedFile->getFile();
             if (!file) {
                 return false;
             }
+            
+            // 将当前的所有文本修改直接应用到 File 对象
+            int numTexts = self.numTexts();
+            for (int i = 0; i < numTexts; i++) {
+                auto textLayers = self.getLayersByEditableIndex(i, pag::LayerType::Text);
+                if (!textLayers.empty()) {
+                    // 获取当前文本层的数据
+                    auto textLayer = std::static_pointer_cast<pag::PAGTextLayer>(textLayers[0]);
+                    
+                    // 创建新的 TextDocument 包含当前值
+                    auto textData = std::make_shared<pag::TextDocument>();
+                    textData->text = textLayer->text();
+                    textData->fillColor = textLayer->fillColor();
+                    textData->strokeColor = textLayer->strokeColor();
+                    textData->fontSize = textLayer->fontSize();
+                    
+                    // 直接修改 File 对象的文本数据
+                    file->setTextData(i, textData);
+                }
+            }
+            
+            // 将当前的所有图片修改应用到副本
+            int numImages = self.numImages();
+            for (int i = 0; i < numImages; i++) {
+                auto imageLayers = self.getLayersByEditableIndex(i, pag::LayerType::Image);
+                if (!imageLayers.empty()) {
+                    auto imageLayer = std::static_pointer_cast<pag::PAGImageLayer>(imageLayers[0]);
+                    // 获取当前替换的图片
+                    auto currentImage = imageLayer->getReplacedImage();
+                    if (currentImage) {
+                        copiedFile->replaceImage(i, currentImage);
+                    }
+                }
+            }
+            
+            // 编码 File 对象
             auto byteData = pag::Codec::Encode(file);
             if (!byteData || byteData->length() == 0) {
                 return false;
             }
+            
+            // 写入文件
             std::ofstream outFile(filePath, std::ios::binary);
             if (!outFile.is_open()) {
                 return false;
@@ -135,17 +182,61 @@ void bind_pag_file(py::module& m) {
             outFile.close();
             return true;
         }, py::arg("filePath"),
-        "Save the modified PAG file to the specified path")
+        "Save the PAG file with all current modifications (replaceText and replaceImage) to the specified path")
         
         .def("toBytes", [](pag::PAGFile& self) -> py::bytes {
-            auto file = self.getFile();
+            // 创建原始文件的副本
+            auto copiedFile = self.copyOriginal();
+            if (!copiedFile) {
+                return py::bytes();
+            }
+            
+            // 获取副本的 File 对象
+            auto file = copiedFile->getFile();
             if (!file) {
                 return py::bytes();
             }
+            
+            // 将当前的所有文本修改直接应用到 File 对象
+            int numTexts = self.numTexts();
+            for (int i = 0; i < numTexts; i++) {
+                auto textLayers = self.getLayersByEditableIndex(i, pag::LayerType::Text);
+                if (!textLayers.empty()) {
+                    // 获取当前文本层的数据
+                    auto textLayer = std::static_pointer_cast<pag::PAGTextLayer>(textLayers[0]);
+                    
+                    // 创建新的 TextDocument 包含当前值
+                    auto textData = std::make_shared<pag::TextDocument>();
+                    textData->text = textLayer->text();
+                    textData->fillColor = textLayer->fillColor();
+                    textData->strokeColor = textLayer->strokeColor();
+                    textData->fontSize = textLayer->fontSize();
+                    
+                    // 直接修改 File 对象的文本数据
+                    file->setTextData(i, textData);
+                }
+            }
+            
+            // 将当前的所有图片修改应用到副本
+            int numImages = self.numImages();
+            for (int i = 0; i < numImages; i++) {
+                auto imageLayers = self.getLayersByEditableIndex(i, pag::LayerType::Image);
+                if (!imageLayers.empty()) {
+                    auto imageLayer = std::static_pointer_cast<pag::PAGImageLayer>(imageLayers[0]);
+                    // 获取当前替换的图片
+                    auto currentImage = imageLayer->getReplacedImage();
+                    if (currentImage) {
+                        copiedFile->replaceImage(i, currentImage);
+                    }
+                }
+            }
+            
+            // 编码 File 对象
             auto byteData = pag::Codec::Encode(file);
             if (!byteData || byteData->length() == 0) {
                 return py::bytes();
             }
+            
             return py::bytes(reinterpret_cast<const char*>(byteData->data()), byteData->length());
-        }, "Encode the PAG file to bytes");
+        }, "Encode the PAG file with all current modifications (replaceText and replaceImage) to bytes");
 }

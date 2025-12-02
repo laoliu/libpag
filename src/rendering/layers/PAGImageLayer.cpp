@@ -651,6 +651,10 @@ ByteData* PAGImageLayer::imageBytes() const {
   return nullptr;
 }
 
+std::shared_ptr<PAGImage> PAGImageLayer::getReplacedImage() const {
+  return getPAGImage();
+}
+
 int64_t PAGImageLayer::contentDurationInternal() {
   Frame maxFrame = 0;
   float frameRate = 60;
