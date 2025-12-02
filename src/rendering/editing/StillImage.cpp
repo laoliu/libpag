@@ -19,10 +19,13 @@
 #include "StillImage.h"
 #include "base/utils/TGFXCast.h"
 #include "base/utils/UniqueID.h"
+#include "codec/utils/WebpDecoder.h"
 #include "pag/pag.h"
 #include "rendering/caches/RenderCache.h"
 #include "rendering/graphics/Graphic.h"
 #include "rendering/graphics/Picture.h"
+#include "tgfx/core/ImageCodec.h"
+#include "tgfx/core/Pixmap.h"
 #include "tgfx/gpu/opengl/GLDevice.h"
 
 namespace pag {
@@ -94,17 +97,67 @@ std::shared_ptr<PAGImage> PAGImage::FromTexture(const BackendTexture& texture, I
 ByteData* PAGImage::toBytes() const {
   // 只有 StillImage 支持导出字节数据
   auto stillImage = dynamic_cast<const StillImage*>(this);
-  if (!stillImage || !stillImage->originalBytes) {
+  if (!stillImage) {
     return nullptr;
   }
   
-  // 复制原始数据并返回
-  auto data = stillImage->originalBytes;
-  auto byteData = ByteData::Make(data->size()).release();
-  if (byteData) {
-    memcpy(const_cast<void*>(static_cast<const void*>(byteData->data())), 
-           data->data(), data->size());
+  // 如果有原始字节数据，检查是否为 WebP 格式
+  if (stillImage->originalBytes) {
+    auto data = stillImage->originalBytes;
+    
+    // 检查是否为 WebP 格式
+    int width = 0, height = 0;
+    if (WebPGetInfo(reinterpret_cast<const uint8_t*>(data->data()), data->size(), 
+                    &width, &height)) {
+      // 已经是 WebP 格式，直接返回
+      auto byteData = ByteData::Make(data->size()).release();
+      if (byteData) {
+        memcpy(const_cast<void*>(static_cast<const void*>(byteData->data())), 
+               data->data(), data->size());
+      }
+      return byteData;
+    }
+    
+    // 不是 WebP 格式（JPEG, PNG 等），需要转换为 WebP
+    // 使用 tgfx::ImageCodec 解码为 RGBA
+    auto codec = tgfx::ImageCodec::MakeFrom(data);
+    if (!codec) {
+      return nullptr;
+    }
+    
+    auto imageWidth = codec->width();
+    auto imageHeight = codec->height();
+    auto info = tgfx::ImageInfo::Make(imageWidth, imageHeight, 
+                                      tgfx::ColorType::RGBA_8888,
+                                      tgfx::AlphaType::Premultiplied);
+    auto rowBytes = imageWidth * 4;
+    auto pixelSize = rowBytes * imageHeight;
+    auto pixels = new uint8_t[pixelSize];
+    
+    if (!codec->readPixels(info, pixels)) {
+      delete[] pixels;
+      return nullptr;
+    }
+    
+    // 使用 tgfx::ImageCodec::Encode 编码为 WebP
+    auto pixmap = tgfx::Pixmap(info, pixels);
+    auto encoded = tgfx::ImageCodec::Encode(pixmap, tgfx::EncodedFormat::WEBP, 90);
+    
+    delete[] pixels;
+    
+    if (!encoded) {
+      return nullptr;
+    }
+    
+    // 复制编码后的数据
+    auto bytes = new uint8_t[encoded->size()];
+    memcpy(bytes, encoded->data(), encoded->size());
+    
+    return ByteData::MakeAdopted(bytes, encoded->size()).release();
   }
-  return byteData;
+  
+  // 如果没有原始字节（例如 FromPixels 创建的图片），返回 nullptr
+  // 因为我们无法在没有渲染上下文的情况下编码图片
+  return nullptr;
 }
 }  // namespace pag

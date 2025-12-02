@@ -162,7 +162,12 @@ void bind_pag_file(py::module& m) {
                     // 获取当前替换的图片
                     auto currentImage = imageLayer->getReplacedImage();
                     if (currentImage) {
-                        copiedFile->replaceImage(i, currentImage);
+                        // 使用新的 API 将图片数据直接写入 File 对象
+                        auto imageBytes = currentImage->toBytes();
+                        if (imageBytes) {
+                            file->setImageData(i, imageBytes, currentImage->width(), currentImage->height());
+                            delete imageBytes;
+                        }
                     }
                 }
             }
@@ -226,7 +231,12 @@ void bind_pag_file(py::module& m) {
                     // 获取当前替换的图片
                     auto currentImage = imageLayer->getReplacedImage();
                     if (currentImage) {
-                        copiedFile->replaceImage(i, currentImage);
+                        // 使用新的 API 将图片数据直接写入 File 对象
+                        auto imageBytes = currentImage->toBytes();
+                        if (imageBytes) {
+                            file->setImageData(i, imageBytes, currentImage->width(), currentImage->height());
+                            delete imageBytes;
+                        }
                     }
                 }
             }

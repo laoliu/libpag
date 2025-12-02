@@ -244,12 +244,16 @@ void File::setImageData(int index, ByteData* imageBytes, int width, int height) 
   oldImageBytes->width = width;
   oldImageBytes->height = height;
   
-  // 从 WebP 数据中获取实际的编码尺寸
+  // 尝试从 WebP 数据中获取实际的编码尺寸，如果不是 WebP 格式则使用传入的尺寸
   int encodedWidth = 0, encodedHeight = 0;
   if (WebPGetInfo(oldImageBytes->fileBytes->data(), oldImageBytes->fileBytes->length(),
                   &encodedWidth, &encodedHeight)) {
     // WebP 编码尺寸应该等于 width * scaleFactor 和 height * scaleFactor
     // 这里我们假设 scaleFactor 为 1.0（对于替换图片通常是这样的）
+    oldImageBytes->scaleFactor = 1.0f;
+  } else {
+    // 如果不是 WebP 格式（例如 JPEG, PNG），也设置 scaleFactor 为 1.0
+    // libpag 会在解码时处理这些格式
     oldImageBytes->scaleFactor = 1.0f;
   }
 }
