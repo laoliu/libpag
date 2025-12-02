@@ -1,6 +1,8 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+#include <fstream>
 #include "pag/pag.h"
+#include "pag/file.h"
 
 namespace py = pybind11;
 
@@ -114,5 +116,36 @@ void bind_pag_file(py::module& m) {
              "Make a copy of the original file")
         
         .def("path", &pag::PAGFile::path,
-             "Returns the file path");
+             "Returns the file path")
+        
+        .def("save", [](pag::PAGFile& self, const std::string& filePath) -> bool {
+            auto file = self.getFile();
+            if (!file) {
+                return false;
+            }
+            auto byteData = pag::Codec::Encode(file);
+            if (!byteData || byteData->length() == 0) {
+                return false;
+            }
+            std::ofstream outFile(filePath, std::ios::binary);
+            if (!outFile.is_open()) {
+                return false;
+            }
+            outFile.write(reinterpret_cast<const char*>(byteData->data()), byteData->length());
+            outFile.close();
+            return true;
+        }, py::arg("filePath"),
+        "Save the modified PAG file to the specified path")
+        
+        .def("toBytes", [](pag::PAGFile& self) -> py::bytes {
+            auto file = self.getFile();
+            if (!file) {
+                return py::bytes();
+            }
+            auto byteData = pag::Codec::Encode(file);
+            if (!byteData || byteData->length() == 0) {
+                return py::bytes();
+            }
+            return py::bytes(reinterpret_cast<const char*>(byteData->data()), byteData->length());
+        }, "Encode the PAG file to bytes");
 }

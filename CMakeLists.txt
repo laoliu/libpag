@@ -376,17 +376,16 @@ elseif (WIN32)
             file(GLOB ANGLE_LIBS ${TGFX_DIR}/vendor/angle/${PLATFORM}/${ARCH}/*${CMAKE_STATIC_LIBRARY_SUFFIX})
             list(APPEND PAG_STATIC_LIBS ${ANGLE_LIBS})
         else ()
-            find_library(OPENGL_LIB opengl32)
-            list(APPEND PAG_STATIC_LIBS ${OPENGL_LIB})
+            # Windows 系统库需要 .lib 后缀
+            list(APPEND PAG_STATIC_LIBS opengl32.lib)
         endif ()
 
         file(GLOB_RECURSE PLATFORM_FILES src/platform/win/*.*)
         list(APPEND PAG_FILES ${PLATFORM_FILES})
     endif ()
-    find_library(Bcrypt_LIB Bcrypt)
-    list(APPEND PAG_SHARED_LIBS ${Bcrypt_LIB})
-    find_library(ws2_32_LIB ws2_32)
-    list(APPEND PAG_SHARED_LIBS ${ws2_32_LIB})
+    # Windows 系统库需要 .lib 后缀
+    list(APPEND PAG_SHARED_LIBS Bcrypt.lib)
+    list(APPEND PAG_SHARED_LIBS ws2_32.lib)
 elseif (CMAKE_HOST_SYSTEM_NAME MATCHES "Linux")
     # finds all required platform libraries.
     find_package(Threads)
