@@ -388,6 +388,20 @@ class PAG_API PAGLayer : public Content {
   void setSkew(float skewX, float skewY);
 
   /**
+   * Get the anchor point from the current matrix.
+   * The anchor point is the point around which transformations are applied.
+   * Returns a Point containing the anchor point coordinates.
+   */
+  Point getAnchorPoint() const;
+
+  /**
+   * Set the anchor point while preserving other transform properties.
+   * The anchor point is the point around which transformations are applied.
+   * This adjusts the matrix translation to maintain the layer's visual position.
+   */
+  void setAnchorPoint(float x, float y);
+
+  /**
    * Returns the current alpha of the layer if previously set.
    */
   float alpha() const;

@@ -69,6 +69,12 @@ void bind_pag_file(py::module& m) {
              py::arg("skewX"), py::arg("skewY"),
              "Set skew (skewX, skewY) in degrees")
         
+        .def("getAnchorPoint", &pag::PAGLayer::getAnchorPoint,
+             "Get anchor point as Point(x, y)")
+        .def("setAnchorPoint", &pag::PAGLayer::setAnchorPoint,
+             py::arg("x"), py::arg("y"),
+             "Set anchor point (x, y)")
+        
         .def("alpha", &pag::PAGLayer::alpha, "Get layer alpha")
         .def("setAlpha", &pag::PAGLayer::setAlpha, py::arg("alpha"),
              "Set layer alpha (0-1)");

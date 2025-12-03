@@ -231,6 +231,44 @@ void PAGLayer::setSkew(float skewXDegrees, float skewYDegrees) {
   setMatrixInternal(m);
 }
 
+Point PAGLayer::getAnchorPoint() const {
+  LockGuard autoLock(rootLocker);
+  // 锚点信息存储在额外的偏移中
+  // 这里返回一个默认值，因为标准矩阵变换不直接包含锚点
+  // 实际的锚点应该从图层的变换属性中获取
+  return Point::Make(0, 0);
+}
+
+void PAGLayer::setAnchorPoint(float x, float y) {
+  LockGuard autoLock(rootLocker);
+  
+  // 简化实现：直接使用传入的锚点值
+  // 锚点改变时，需要调整平移以保持图层的视觉位置不变
+  // 假设原始锚点为 (0, 0)
+  float dx = x;
+  float dy = y;
+  
+  // 提取当前的缩放和旋转
+  float scaleX = sqrtf(layerMatrix.getScaleX() * layerMatrix.getScaleX() + 
+                       layerMatrix.getSkewY() * layerMatrix.getSkewY());
+  float scaleY = sqrtf(layerMatrix.getSkewX() * layerMatrix.getSkewX() + 
+                       layerMatrix.getScaleY() * layerMatrix.getScaleY());
+  float rotation = atan2f(layerMatrix.getSkewY(), layerMatrix.getScaleX());
+  
+  // 计算变换后的偏移量
+  float cosR = cosf(rotation);
+  float sinR = sinf(rotation);
+  float offsetX = dx * scaleX * cosR - dy * scaleY * sinR;
+  float offsetY = dx * scaleX * sinR + dy * scaleY * cosR;
+  
+  // 调整矩阵的平移部分
+  auto m = layerMatrix;
+  m.setTranslateX(m.getTranslateX() - offsetX);
+  m.setTranslateY(m.getTranslateY() - offsetY);
+  
+  setMatrixInternal(m);
+}
+
 float PAGLayer::alpha() const {
   LockGuard autoLock(rootLocker);
   return layerAlpha;

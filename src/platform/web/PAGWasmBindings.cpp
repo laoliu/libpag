@@ -113,6 +113,8 @@ bool PAGBindInit() {
       .function("_setRotation", &PAGLayer::setRotation)
       .function("_getSkew", &PAGLayer::getSkew)
       .function("_setSkew", &PAGLayer::setSkew)
+      .function("_getAnchorPoint", &PAGLayer::getAnchorPoint)
+      .function("_setAnchorPoint", &PAGLayer::setAnchorPoint)
       .function("_alpha", &PAGLayer::alpha)
       .function("_setAlpha", &PAGLayer::setAlpha)
       .function("_visible", &PAGLayer::visible)
