@@ -17,6 +17,8 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "StillImage.h"
+#include <algorithm>
+#include <cctype>
 #include "base/utils/TGFXCast.h"
 #include "base/utils/UniqueID.h"
 #include "codec/utils/WebpDecoder.h"
@@ -160,4 +162,186 @@ ByteData* PAGImage::toBytes() const {
   // 因为我们无法在没有渲染上下文的情况下编码图片
   return nullptr;
 }
+
+ByteData* PAGImage::toPNG() const {
+  // 只有 StillImage 支持导出字节数据
+  auto stillImage = dynamic_cast<const StillImage*>(this);
+  if (!stillImage || !stillImage->originalBytes) {
+    return nullptr;
+  }
+  
+  auto data = stillImage->originalBytes;
+  
+  // 检查是否已经是 PNG 格式
+  static const uint8_t PNG_SIGNATURE[] = {0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A};
+  if (data->size() >= 8 && 
+      memcmp(data->data(), PNG_SIGNATURE, 8) == 0) {
+    // 已经是 PNG 格式，直接返回
+    auto byteData = ByteData::Make(data->size()).release();
+    if (byteData) {
+      memcpy(const_cast<void*>(static_cast<const void*>(byteData->data())), 
+             data->data(), data->size());
+    }
+    return byteData;
+  }
+  
+  // 需要转换为 PNG
+  auto codec = tgfx::ImageCodec::MakeFrom(data);
+  if (!codec) {
+    return nullptr;
+  }
+  
+  auto imageWidth = codec->width();
+  auto imageHeight = codec->height();
+  auto info = tgfx::ImageInfo::Make(imageWidth, imageHeight, 
+                                    tgfx::ColorType::RGBA_8888,
+                                    tgfx::AlphaType::Premultiplied);
+  auto rowBytes = imageWidth * 4;
+  auto pixelSize = rowBytes * imageHeight;
+  auto pixels = new uint8_t[pixelSize];
+  
+  if (!codec->readPixels(info, pixels)) {
+    delete[] pixels;
+    return nullptr;
+  }
+  
+  // 使用 tgfx::ImageCodec::Encode 编码为 PNG
+  auto pixmap = tgfx::Pixmap(info, pixels);
+  auto encoded = tgfx::ImageCodec::Encode(pixmap, tgfx::EncodedFormat::PNG, 100);
+  
+  delete[] pixels;
+  
+  if (!encoded) {
+    return nullptr;
+  }
+  
+  // 复制编码后的数据
+  auto bytes = new uint8_t[encoded->size()];
+  memcpy(bytes, encoded->data(), encoded->size());
+  
+  return ByteData::MakeAdopted(bytes, encoded->size()).release();
+}
+
+ByteData* PAGImage::toJPEG(int quality) const {
+  // 只有 StillImage 支持导出字节数据
+  auto stillImage = dynamic_cast<const StillImage*>(this);
+  if (!stillImage || !stillImage->originalBytes) {
+    return nullptr;
+  }
+  
+  // 限制质量范围在 0-100
+  if (quality < 0) quality = 0;
+  if (quality > 100) quality = 100;
+  
+  auto data = stillImage->originalBytes;
+  
+  // 检查是否已经是 JPEG 格式
+  static const uint8_t JPEG_SIGNATURE[] = {0xFF, 0xD8, 0xFF};
+  if (data->size() >= 3 && 
+      memcmp(data->data(), JPEG_SIGNATURE, 3) == 0) {
+    // 已经是 JPEG 格式
+    // 如果质量要求是100或90（默认高质量），直接返回原始数据
+    if (quality >= 90) {
+      auto byteData = ByteData::Make(data->size()).release();
+      if (byteData) {
+        memcpy(const_cast<void*>(static_cast<const void*>(byteData->data())), 
+               data->data(), data->size());
+      }
+      return byteData;
+    }
+  }
+  
+  // 需要转换为 JPEG 或重新编码
+  auto codec = tgfx::ImageCodec::MakeFrom(data);
+  if (!codec) {
+    return nullptr;
+  }
+  
+  auto imageWidth = codec->width();
+  auto imageHeight = codec->height();
+  auto info = tgfx::ImageInfo::Make(imageWidth, imageHeight, 
+                                    tgfx::ColorType::RGBA_8888,
+                                    tgfx::AlphaType::Premultiplied);
+  auto rowBytes = imageWidth * 4;
+  auto pixelSize = rowBytes * imageHeight;
+  auto pixels = new uint8_t[pixelSize];
+  
+  if (!codec->readPixels(info, pixels)) {
+    delete[] pixels;
+    return nullptr;
+  }
+  
+  // 使用 tgfx::ImageCodec::Encode 编码为 JPEG
+  auto pixmap = tgfx::Pixmap(info, pixels);
+  auto encoded = tgfx::ImageCodec::Encode(pixmap, tgfx::EncodedFormat::JPEG, quality);
+  
+  delete[] pixels;
+  
+  if (!encoded) {
+    return nullptr;
+  }
+  
+  // 复制编码后的数据
+  auto bytes = new uint8_t[encoded->size()];
+  memcpy(bytes, encoded->data(), encoded->size());
+  
+  return ByteData::MakeAdopted(bytes, encoded->size()).release();
+}
+
+ByteData* PAGImage::encode(const std::string& format, int quality) const {
+  // 将格式字符串转换为大写以便比较
+  std::string upperFormat = format;
+  std::transform(upperFormat.begin(), upperFormat.end(), upperFormat.begin(), ::toupper);
+  
+  if (upperFormat == "PNG") {
+    return toPNG();
+  } else if (upperFormat == "JPEG" || upperFormat == "JPG") {
+    return toJPEG(quality);
+  } else if (upperFormat == "WEBP") {
+    // toBytes() 默认返回 WebP 格式
+    // 但我们可以提供质量参数的版本
+    auto stillImage = dynamic_cast<const StillImage*>(this);
+    if (!stillImage || !stillImage->originalBytes) {
+      return nullptr;
+    }
+    
+    auto data = stillImage->originalBytes;
+    auto codec = tgfx::ImageCodec::MakeFrom(data);
+    if (!codec) {
+      return nullptr;
+    }
+    
+    auto imageWidth = codec->width();
+    auto imageHeight = codec->height();
+    auto info = tgfx::ImageInfo::Make(imageWidth, imageHeight, 
+                                      tgfx::ColorType::RGBA_8888,
+                                      tgfx::AlphaType::Premultiplied);
+    auto rowBytes = imageWidth * 4;
+    auto pixelSize = rowBytes * imageHeight;
+    auto pixels = new uint8_t[pixelSize];
+    
+    if (!codec->readPixels(info, pixels)) {
+      delete[] pixels;
+      return nullptr;
+    }
+    
+    auto pixmap = tgfx::Pixmap(info, pixels);
+    auto encoded = tgfx::ImageCodec::Encode(pixmap, tgfx::EncodedFormat::WEBP, quality);
+    
+    delete[] pixels;
+    
+    if (!encoded) {
+      return nullptr;
+    }
+    
+    auto bytes = new uint8_t[encoded->size()];
+    memcpy(bytes, encoded->data(), encoded->size());
+    
+    return ByteData::MakeAdopted(bytes, encoded->size()).release();
+  }
+  
+  // 不支持的格式
+  return nullptr;
+}
+
 }  // namespace pag

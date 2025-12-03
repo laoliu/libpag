@@ -58,6 +58,10 @@ void bind_pag_file(py::module& m) {
         .def("contentDuration", &pag::PAGImageLayer::contentDuration)
         .def("getReplacedImage", &pag::PAGImageLayer::getReplacedImage,
              "Returns the current replaced image if any, otherwise returns None")
+        .def("getOriginalImage", &pag::PAGImageLayer::getOriginalImage,
+             "Returns the original placeholder image from the PAG file")
+        .def("getCurrentImage", &pag::PAGImageLayer::getCurrentImage,
+             "Returns the current image (replaced or original)")
         .def("getOriginalImageBounds", &pag::PAGImageLayer::getOriginalImageBounds,
              "Returns the bounds of the original placeholder image")
         .def("getOriginalImageMatrix", &pag::PAGImageLayer::getOriginalImageMatrix,

@@ -655,6 +655,28 @@ std::shared_ptr<PAGImage> PAGImageLayer::getReplacedImage() const {
   return getPAGImage();
 }
 
+std::shared_ptr<PAGImage> PAGImageLayer::getOriginalImage() const {
+  auto imageLayer = static_cast<ImageLayer*>(layer);
+  if (!imageLayer || !imageLayer->imageBytes || !imageLayer->imageBytes->fileBytes) {
+    return nullptr;
+  }
+  
+  // 从 imageBytes 的 fileBytes 创建 PAGImage
+  auto fileBytes = imageLayer->imageBytes->fileBytes;
+  
+  // 使用 PAGImage::FromBytes 从原始图片数据创建 PAGImage
+  return PAGImage::FromBytes(fileBytes->data(), fileBytes->length());
+}
+
+std::shared_ptr<PAGImage> PAGImageLayer::getCurrentImage() const {
+  // 优先返回替换的图片，如果没有则返回原始图片
+  auto replacedImage = getReplacedImage();
+  if (replacedImage) {
+    return replacedImage;
+  }
+  return getOriginalImage();
+}
+
 Rect PAGImageLayer::getOriginalImageBounds() const {
   auto imageLayer = static_cast<ImageLayer*>(layer);
   if (imageLayer && imageLayer->imageBytes) {

@@ -158,6 +158,45 @@ class PAG_API PAGImage {
    */
   ByteData* toBytes() const;
 
+  /**
+   * Encodes the PAGImage to PNG format bytes (lossless compression).
+   * Returns nullptr if encoding fails.
+   * 
+   * PNG is recommended for:
+   * - Images with transparency
+   * - Images requiring lossless quality
+   * - General purpose export
+   * 
+   * @return ByteData* containing PNG encoded data, or nullptr on failure
+   */
+  ByteData* toPNG() const;
+
+  /**
+   * Encodes the PAGImage to JPEG format bytes (lossy compression).
+   * Returns nullptr if encoding fails.
+   * 
+   * JPEG is recommended for:
+   * - Photographic images
+   * - Smaller file sizes
+   * - Images without transparency (alpha channel will be discarded)
+   * 
+   * @param quality Encoding quality from 0-100, where 100 is highest quality.
+   *                Default is 90 for good quality with reasonable file size.
+   * @return ByteData* containing JPEG encoded data, or nullptr on failure
+   */
+  ByteData* toJPEG(int quality = 90) const;
+
+  /**
+   * Encodes the PAGImage to the specified format.
+   * Supported formats: "PNG", "JPEG", "WEBP"
+   * 
+   * @param format Image format string ("PNG", "JPEG", or "WEBP", case-insensitive)
+   * @param quality Quality for lossy formats (JPEG, WEBP). Range 0-100, default 90.
+   *                Ignored for PNG (lossless).
+   * @return ByteData* containing encoded image data, or nullptr on failure
+   */
+  ByteData* encode(const std::string& format, int quality = 90) const;
+
  protected:
   PAGImage(int width, int height);
 
@@ -790,6 +829,33 @@ class PAG_API PAGImageLayer : public PAGLayer {
    * This method can be used to get the image set by replaceImage() or setImage().
    */
   std::shared_ptr<PAGImage> getReplacedImage() const;
+
+  /**
+   * Returns the original placeholder image from the PAG file.
+   * This image is the one embedded in the PAG file before any replacement.
+   * Returns nullptr if the layer has no original image data.
+   * 
+   * This is useful for:
+   * - Getting the original image even before first replacement (unlike getReplacedImage())
+   * - Extracting original assets from PAG files
+   * - Creating thumbnails of original content
+   * 
+   * @return The original PAGImage from the layer, or nullptr if not available
+   */
+  std::shared_ptr<PAGImage> getOriginalImage() const;
+
+  /**
+   * Returns the current image content of this layer.
+   * If an image has been replaced (via replaceImage/setImage), returns the replaced image.
+   * Otherwise, returns the original image from the PAG file.
+   * 
+   * This is a convenience method that combines getReplacedImage() and getOriginalImage():
+   * - Returns getReplacedImage() if available
+   * - Otherwise returns getOriginalImage()
+   * 
+   * @return The current image (replaced or original), or nullptr if no image exists
+   */
+  std::shared_ptr<PAGImage> getCurrentImage() const;
 
   /**
    * Returns the original image bounds (width and height) from the layer's imageBytes.
