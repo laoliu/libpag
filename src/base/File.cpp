@@ -251,26 +251,33 @@ void File::setImageData(int index, ByteData* imageBytes, int width, int height) 
   oldImageBytes->width = width;
   oldImageBytes->height = height;
   
-  // 恢复锚点信息（保持图片在合成中的位置）
-  oldImageBytes->anchorX = oldAnchorX;
-  oldImageBytes->anchorY = oldAnchorY;
-  
-  // 重新计算缩放因子，以保持相同的显示尺寸
-  // 显示宽度 = width / scaleFactor，要保持显示尺寸不变：
-  // oldWidth / oldScaleFactor = newWidth / newScaleFactor
-  // 因此：newScaleFactor = oldScaleFactor * (newWidth / oldWidth)
+  // 重新计算缩放因子和锚点，以保持相同的显示尺寸和位置
+  // 显示尺寸 = 原始尺寸 / scaleFactor
+  // 锚点是相对于图片原始尺寸的偏移量，需要按比例调整
   if (oldScaleFactor > 0.0f && oldWidth > 0 && oldHeight > 0) {
-    // 使用宽度比例调整 scaleFactor
+    // 计算宽度和高度的缩放比例
     float widthRatio = static_cast<float>(width) / static_cast<float>(oldWidth);
-    oldImageBytes->scaleFactor = oldScaleFactor * widthRatio;
+    float heightRatio = static_cast<float>(height) / static_cast<float>(oldHeight);
     
-    // 确保 scaleFactor 大于 0（移除上限限制，允许 > 1.0）
+    // 使用较大的比例，确保新图片完全覆盖原始显示区域
+    // 这样可以避免出现留白，同时保持宽高比
+    float ratio = std::max(widthRatio, heightRatio);
+    oldImageBytes->scaleFactor = oldScaleFactor * ratio;
+    
+    // 按比例调整锚点位置
+    // 锚点定义了图片的参考点，需要根据新图片尺寸按比例缩放
+    oldImageBytes->anchorX = static_cast<int>(oldAnchorX * widthRatio);
+    oldImageBytes->anchorY = static_cast<int>(oldAnchorY * heightRatio);
+    
+    // 确保 scaleFactor 大于 0
     if (oldImageBytes->scaleFactor <= 0.0f) {
       oldImageBytes->scaleFactor = 0.01f;
     }
   } else {
-    // 如果原始信息无效，则设置为默认值 1.0
+    // 如果原始信息无效，则设置为默认值
     oldImageBytes->scaleFactor = 1.0f;
+    oldImageBytes->anchorX = 0;
+    oldImageBytes->anchorY = 0;
   }
 }
 
