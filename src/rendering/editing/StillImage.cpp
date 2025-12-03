@@ -98,7 +98,7 @@ std::shared_ptr<PAGImage> PAGImage::FromTexture(const BackendTexture& texture, I
 
 ByteData* PAGImage::toBytes() const {
   // 只有 StillImage 支持导出字节数据
-  auto stillImage = dynamic_cast<const StillImage*>(this);
+  auto stillImage = static_cast<const StillImage*>(this);
   if (!stillImage) {
     return nullptr;
   }
@@ -165,7 +165,7 @@ ByteData* PAGImage::toBytes() const {
 
 ByteData* PAGImage::toPNG() const {
   // 只有 StillImage 支持导出字节数据
-  auto stillImage = dynamic_cast<const StillImage*>(this);
+  auto stillImage = static_cast<const StillImage*>(this);
   if (!stillImage || !stillImage->originalBytes) {
     return nullptr;
   }
@@ -224,7 +224,7 @@ ByteData* PAGImage::toPNG() const {
 
 ByteData* PAGImage::toJPEG(int quality) const {
   // 只有 StillImage 支持导出字节数据
-  auto stillImage = dynamic_cast<const StillImage*>(this);
+  auto stillImage = static_cast<const StillImage*>(this);
   if (!stillImage || !stillImage->originalBytes) {
     return nullptr;
   }
@@ -300,7 +300,7 @@ ByteData* PAGImage::encode(const std::string& format, int quality) const {
   } else if (upperFormat == "WEBP") {
     // toBytes() 默认返回 WebP 格式
     // 但我们可以提供质量参数的版本
-    auto stillImage = dynamic_cast<const StillImage*>(this);
+    auto stillImage = static_cast<const StillImage*>(this);
     if (!stillImage || !stillImage->originalBytes) {
       return nullptr;
     }
