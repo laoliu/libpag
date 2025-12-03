@@ -13,6 +13,29 @@ void bind_pag_layer(py::module& m) {
         .def("resetMatrix", &pag::PAGLayer::resetMatrix, "Reset transformation matrix")
         .def("getTotalMatrix", &pag::PAGLayer::getTotalMatrix,
              "Get total transformation matrix")
+        
+        // 变换分解方法
+        .def("getPosition", &pag::PAGLayer::getPosition,
+             "Get position as Point(x, y)")
+        .def("setPosition", &pag::PAGLayer::setPosition, 
+             py::arg("x"), py::arg("y"),
+             "Set position (x, y)")
+        .def("getScale", &pag::PAGLayer::getScale,
+             "Get scale as Point(scaleX, scaleY)")
+        .def("setScale", &pag::PAGLayer::setScale,
+             py::arg("scaleX"), py::arg("scaleY"),
+             "Set scale (scaleX, scaleY)")
+        .def("getRotation", &pag::PAGLayer::getRotation,
+             "Get rotation angle in degrees")
+        .def("setRotation", &pag::PAGLayer::setRotation,
+             py::arg("degrees"),
+             "Set rotation angle in degrees")
+        .def("getSkew", &pag::PAGLayer::getSkew,
+             "Get skew as Point(skewX, skewY) in degrees")
+        .def("setSkew", &pag::PAGLayer::setSkew,
+             py::arg("skewX"), py::arg("skewY"),
+             "Set skew (skewX, skewY) in degrees")
+        
         .def("alpha", &pag::PAGLayer::alpha, "Get layer alpha")
         .def("setAlpha", &pag::PAGLayer::setAlpha, py::arg("alpha"),
              "Set layer alpha (0-1)")

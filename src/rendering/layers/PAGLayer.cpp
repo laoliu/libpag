@@ -26,6 +26,11 @@
 #include "rendering/renderers/TrackMatteRenderer.h"
 #include "rendering/utils/LockGuard.h"
 #include "rendering/utils/ScopedLock.h"
+#include <cmath>
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 namespace pag {
 PAGLayer::PAGLayer(std::shared_ptr<File> file, Layer* layer)
@@ -81,6 +86,149 @@ Matrix PAGLayer::getTotalMatrixInternal() {
   auto matrix = ToPAG(layerCache->getTransform(contentFrame)->matrix);
   matrix.postConcat(layerMatrix);
   return matrix;
+}
+
+Point PAGLayer::getPosition() const {
+  LockGuard autoLock(rootLocker);
+  return Point::Make(layerMatrix.getTranslateX(), layerMatrix.getTranslateY());
+}
+
+void PAGLayer::setPosition(float x, float y) {
+  LockGuard autoLock(rootLocker);
+  auto m = layerMatrix;
+  m.setTranslateX(x);
+  m.setTranslateY(y);
+  setMatrixInternal(m);
+}
+
+Point PAGLayer::getScale() const {
+  LockGuard autoLock(rootLocker);
+  // 从矩阵中提取缩放值
+  float scaleX = sqrtf(layerMatrix.getScaleX() * layerMatrix.getScaleX() + 
+                       layerMatrix.getSkewY() * layerMatrix.getSkewY());
+  float scaleY = sqrtf(layerMatrix.getSkewX() * layerMatrix.getSkewX() + 
+                       layerMatrix.getScaleY() * layerMatrix.getScaleY());
+  
+  // 保持缩放的符号（负缩放表示翻转）
+  if (layerMatrix.getScaleX() < 0) scaleX = -scaleX;
+  if (layerMatrix.getScaleY() < 0) scaleY = -scaleY;
+  
+  return Point::Make(scaleX, scaleY);
+}
+
+void PAGLayer::setScale(float scaleX, float scaleY) {
+  LockGuard autoLock(rootLocker);
+  
+  // 提取当前的旋转和skew
+  float currentScaleX = sqrtf(layerMatrix.getScaleX() * layerMatrix.getScaleX() + 
+                              layerMatrix.getSkewY() * layerMatrix.getSkewY());
+  float currentScaleY = sqrtf(layerMatrix.getSkewX() * layerMatrix.getSkewX() + 
+                              layerMatrix.getScaleY() * layerMatrix.getScaleY());
+  
+  if (currentScaleX == 0) currentScaleX = 1.0f;
+  if (currentScaleY == 0) currentScaleY = 1.0f;
+  
+  auto m = layerMatrix;
+  // 应用新的缩放，保持旋转和skew
+  m.setScaleX((m.getScaleX() / currentScaleX) * scaleX);
+  m.setSkewY((m.getSkewY() / currentScaleX) * scaleX);
+  m.setSkewX((m.getSkewX() / currentScaleY) * scaleY);
+  m.setScaleY((m.getScaleY() / currentScaleY) * scaleY);
+  
+  setMatrixInternal(m);
+}
+
+float PAGLayer::getRotation() const {
+  LockGuard autoLock(rootLocker);
+  // 从矩阵中提取旋转角度（弧度转角度）
+  return atan2f(layerMatrix.getSkewY(), layerMatrix.getScaleX()) * 180.0f / M_PI;
+}
+
+void PAGLayer::setRotation(float degrees) {
+  LockGuard autoLock(rootLocker);
+  
+  // 提取当前的缩放
+  float scaleX = sqrtf(layerMatrix.getScaleX() * layerMatrix.getScaleX() + 
+                       layerMatrix.getSkewY() * layerMatrix.getSkewY());
+  float scaleY = sqrtf(layerMatrix.getSkewX() * layerMatrix.getSkewX() + 
+                       layerMatrix.getScaleY() * layerMatrix.getScaleY());
+  
+  if (layerMatrix.getScaleX() < 0) scaleX = -scaleX;
+  if (layerMatrix.getScaleY() < 0) scaleY = -scaleY;
+  
+  // 转换角度为弧度
+  float radians = degrees * M_PI / 180.0f;
+  float cosR = cosf(radians);
+  float sinR = sinf(radians);
+  
+  auto m = layerMatrix;
+  // 应用旋转，保持缩放
+  m.setScaleX(cosR * scaleX);
+  m.setSkewY(sinR * scaleX);
+  m.setSkewX(-sinR * scaleY);
+  m.setScaleY(cosR * scaleY);
+  
+  setMatrixInternal(m);
+}
+
+Point PAGLayer::getSkew() const {
+  LockGuard autoLock(rootLocker);
+  
+  // 提取缩放和旋转
+  float scaleX = sqrtf(layerMatrix.getScaleX() * layerMatrix.getScaleX() + 
+                       layerMatrix.getSkewY() * layerMatrix.getSkewY());
+  float scaleY = sqrtf(layerMatrix.getSkewX() * layerMatrix.getSkewX() + 
+                       layerMatrix.getScaleY() * layerMatrix.getScaleY());
+  float rotation = atan2f(layerMatrix.getSkewY(), layerMatrix.getScaleX());
+  
+  if (scaleX == 0 || scaleY == 0) {
+    return Point::Make(0, 0);
+  }
+  
+  float cosR = cosf(rotation);
+  float sinR = sinf(rotation);
+  
+  // 从矩阵反推 skewX
+  // 根据 setSkew 的公式: m.setScaleY((cosR + sinR * tanSkewX) * scaleY)
+  // => (m.d / scaleY) = (cosR + sinR * tanSkewX)
+  // => tanSkewX = ((m.d / scaleY) - cosR) / sinR
+  
+  float tanSkewX = 0;
+  if (fabsf(sinR) > 1e-6) {
+    tanSkewX = (layerMatrix.getScaleY() / scaleY - cosR) / sinR;
+  }
+  
+  float skewX = atanf(tanSkewX) * 180.0f / M_PI;
+  float skewY = 0;  // 2D仿射变换通常只有 skewX
+  
+  return Point::Make(skewX, skewY);
+}
+
+void PAGLayer::setSkew(float skewXDegrees, float skewYDegrees) {
+  LockGuard autoLock(rootLocker);
+  
+  // 提取当前的缩放和旋转
+  float scaleX = sqrtf(layerMatrix.getScaleX() * layerMatrix.getScaleX() + 
+                       layerMatrix.getSkewY() * layerMatrix.getSkewY());
+  float scaleY = sqrtf(layerMatrix.getSkewX() * layerMatrix.getSkewX() + 
+                       layerMatrix.getScaleY() * layerMatrix.getScaleY());
+  float rotation = atan2f(layerMatrix.getSkewY(), layerMatrix.getScaleX());
+  
+  if (layerMatrix.getScaleX() < 0) scaleX = -scaleX;
+  if (layerMatrix.getScaleY() < 0) scaleY = -scaleY;
+  
+  float skewXRad = skewXDegrees * M_PI / 180.0f;
+  float cosR = cosf(rotation);
+  float sinR = sinf(rotation);
+  float tanSkewX = tanf(skewXRad);
+  
+  auto m = layerMatrix;
+  m.setScaleX(cosR * scaleX);
+  m.setSkewY(sinR * scaleX);
+  m.setSkewX((-sinR + cosR * tanSkewX) * scaleY);
+  m.setScaleY((cosR + sinR * tanSkewX) * scaleY);
+  
+  setMatrixInternal(m);
 }
 
 float PAGLayer::alpha() const {

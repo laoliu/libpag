@@ -341,6 +341,53 @@ class PAG_API PAGLayer : public Content {
   Matrix getTotalMatrix();
 
   /**
+   * Get the position (x, y) from the current matrix.
+   * Returns a Point containing the translation values.
+   */
+  Point getPosition() const;
+
+  /**
+   * Set the position (x, y) while preserving other transform properties.
+   * This method decomposes the current matrix, updates position, and recomposes it.
+   */
+  void setPosition(float x, float y);
+
+  /**
+   * Get the scale (sx, sy) from the current matrix.
+   * Returns a Point containing the scale values.
+   */
+  Point getScale() const;
+
+  /**
+   * Set the scale (sx, sy) while preserving other transform properties.
+   * This method decomposes the current matrix, updates scale, and recomposes it.
+   */
+  void setScale(float scaleX, float scaleY);
+
+  /**
+   * Get the rotation angle in degrees from the current matrix.
+   */
+  float getRotation() const;
+
+  /**
+   * Set the rotation angle in degrees while preserving other transform properties.
+   * This method decomposes the current matrix, updates rotation, and recomposes it.
+   */
+  void setRotation(float degrees);
+
+  /**
+   * Get the skew (skewX, skewY) from the current matrix.
+   * Returns a Point containing the skew values in degrees.
+   */
+  Point getSkew() const;
+
+  /**
+   * Set the skew (skewX, skewY) while preserving other transform properties.
+   * This method decomposes the current matrix, updates skew, and recomposes it.
+   */
+  void setSkew(float skewX, float skewY);
+
+  /**
    * Returns the current alpha of the layer if previously set.
    */
   float alpha() const;

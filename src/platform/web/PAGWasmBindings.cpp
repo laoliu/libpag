@@ -105,6 +105,14 @@ bool PAGBindInit() {
       .function("_setMatrix", &PAGLayer::setMatrix)
       .function("_resetMatrix", &PAGLayer::resetMatrix)
       .function("_getTotalMatrix", &PAGLayer::getTotalMatrix)
+      .function("_getPosition", &PAGLayer::getPosition)
+      .function("_setPosition", &PAGLayer::setPosition)
+      .function("_getScale", &PAGLayer::getScale)
+      .function("_setScale", &PAGLayer::setScale)
+      .function("_getRotation", &PAGLayer::getRotation)
+      .function("_setRotation", &PAGLayer::setRotation)
+      .function("_getSkew", &PAGLayer::getSkew)
+      .function("_setSkew", &PAGLayer::setSkew)
       .function("_alpha", &PAGLayer::alpha)
       .function("_setAlpha", &PAGLayer::setAlpha)
       .function("_visible", &PAGLayer::visible)
@@ -204,7 +212,9 @@ bool PAGBindInit() {
                     return val::null();
                   }
                   return val(typed_memory_view(result->length(), result->data()));
-                }));
+                }))
+      .function("_getOriginalImage", &PAGImageLayer::getOriginalImage)
+      .function("_getCurrentImage", &PAGImageLayer::getCurrentImage);
 
   class_<PAGTextLayer, base<PAGLayer>>("_PAGTextLayer")
       .smart_ptr<std::shared_ptr<PAGTextLayer>>("_PAGTextLayer")
@@ -445,7 +455,47 @@ bool PAGBindInit() {
                   pagImage.setScaleMode(static_cast<PAGScaleMode>(scaleMode));
                 }))
       .function("_matrix", &PAGImage::matrix)
-      .function("_setMatrix", &PAGImage::setMatrix);
+      .function("_setMatrix", &PAGImage::setMatrix)
+      .function("_toBytes", optional_override([](PAGImage& pagImage) {
+                  ByteData* result = pagImage.toBytes();
+                  if (!result || result->length() == 0) {
+                    delete result;
+                    return val::null();
+                  }
+                  auto view = val(typed_memory_view(result->length(), result->data()));
+                  delete result;
+                  return view;
+                }))
+      .function("_toPNG", optional_override([](PAGImage& pagImage) {
+                  ByteData* result = pagImage.toPNG();
+                  if (!result || result->length() == 0) {
+                    delete result;
+                    return val::null();
+                  }
+                  auto view = val(typed_memory_view(result->length(), result->data()));
+                  delete result;
+                  return view;
+                }))
+      .function("_toJPEG", optional_override([](PAGImage& pagImage, int quality) {
+                  ByteData* result = pagImage.toJPEG(quality);
+                  if (!result || result->length() == 0) {
+                    delete result;
+                    return val::null();
+                  }
+                  auto view = val(typed_memory_view(result->length(), result->data()));
+                  delete result;
+                  return view;
+                }))
+      .function("_encode", optional_override([](PAGImage& pagImage, std::string format, int quality) {
+                  ByteData* result = pagImage.encode(format, quality);
+                  if (!result || result->length() == 0) {
+                    delete result;
+                    return val::null();
+                  }
+                  auto view = val(typed_memory_view(result->length(), result->data()));
+                  delete result;
+                  return view;
+                }));
 
   class_<PAGPlayer>("_PAGPlayer")
       .smart_ptr_constructor("_PAGPlayer", &std::make_shared<PAGPlayer>)
