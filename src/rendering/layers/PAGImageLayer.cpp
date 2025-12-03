@@ -655,6 +655,48 @@ std::shared_ptr<PAGImage> PAGImageLayer::getReplacedImage() const {
   return getPAGImage();
 }
 
+Rect PAGImageLayer::getOriginalImageBounds() const {
+  auto imageLayer = static_cast<ImageLayer*>(layer);
+  if (imageLayer && imageLayer->imageBytes) {
+    return Rect::MakeWH(imageLayer->imageBytes->width, imageLayer->imageBytes->height);
+  }
+  return Rect::MakeEmpty();
+}
+
+Matrix PAGImageLayer::getOriginalImageMatrix() const {
+  auto imageLayer = static_cast<ImageLayer*>(layer);
+  if (imageLayer && imageLayer->imageBytes) {
+    auto imageBytes = imageLayer->imageBytes;
+    // 根据 ImageContentCache::Get() 的实现，构建相同的变换矩阵
+    // 1. 先缩放 1/scaleFactor
+    // 2. 然后平移 -anchorX, -anchorY
+    auto matrix = Matrix();
+    auto scale = 1.0f / imageBytes->scaleFactor;
+    matrix.postScale(scale, scale);
+    matrix.postTranslate(-static_cast<float>(imageBytes->anchorX),
+                         -static_cast<float>(imageBytes->anchorY));
+    return matrix;
+  }
+  return Matrix::I();
+}
+
+float PAGImageLayer::getOriginalScaleFactor() const {
+  auto imageLayer = static_cast<ImageLayer*>(layer);
+  if (imageLayer && imageLayer->imageBytes) {
+    return imageLayer->imageBytes->scaleFactor;
+  }
+  return 1.0f;
+}
+
+Point PAGImageLayer::getOriginalAnchorPoint() const {
+  auto imageLayer = static_cast<ImageLayer*>(layer);
+  if (imageLayer && imageLayer->imageBytes) {
+    return Point::Make(static_cast<float>(imageLayer->imageBytes->anchorX),
+                       static_cast<float>(imageLayer->imageBytes->anchorY));
+  }
+  return Point::Make(0, 0);
+}
+
 int64_t PAGImageLayer::contentDurationInternal() {
   Frame maxFrame = 0;
   float frameRate = 60;

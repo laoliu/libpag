@@ -7,6 +7,9 @@
 namespace py = pybind11;
 
 void bind_pag_file(py::module& m) {
+    // Rect 类型 - 添加到主模块中定义，这里只是确保使用
+    // Point 和 Matrix 已在主模块中定义
+    
     // TextDocument 类
     py::class_<pag::TextDocument, std::shared_ptr<pag::TextDocument>>(m, "TextDocument")
         .def(py::init<>())
@@ -54,7 +57,15 @@ void bind_pag_file(py::module& m) {
         .def("setImage", &pag::PAGImageLayer::setImage)
         .def("contentDuration", &pag::PAGImageLayer::contentDuration)
         .def("getReplacedImage", &pag::PAGImageLayer::getReplacedImage,
-             "Returns the current replaced image if any, otherwise returns None");
+             "Returns the current replaced image if any, otherwise returns None")
+        .def("getOriginalImageBounds", &pag::PAGImageLayer::getOriginalImageBounds,
+             "Returns the bounds of the original placeholder image")
+        .def("getOriginalImageMatrix", &pag::PAGImageLayer::getOriginalImageMatrix,
+             "Returns the transformation matrix of the original placeholder image")
+        .def("getOriginalScaleFactor", &pag::PAGImageLayer::getOriginalScaleFactor,
+             "Returns the scale factor of the original placeholder image")
+        .def("getOriginalAnchorPoint", &pag::PAGImageLayer::getOriginalAnchorPoint,
+             "Returns the anchor point of the original placeholder image");
     
     // PAGComposition 基类
     py::class_<pag::PAGComposition, pag::PAGLayer, std::shared_ptr<pag::PAGComposition>>(m, "PAGComposition")

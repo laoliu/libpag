@@ -41,6 +41,21 @@ PYBIND11_MODULE(pypag, m) {
         .def("__repr__", [](const pag::Point& p) {
             return "Point(x=" + std::to_string(p.x) + ", y=" + std::to_string(p.y) + ")";
         });
+    
+    py::class_<pag::Rect>(m, "Rect")
+        .def(py::init<>())
+        .def("setEmpty", &pag::Rect::setEmpty)
+        .def("isEmpty", &pag::Rect::isEmpty)
+        .def("width", &pag::Rect::width)
+        .def("height", &pag::Rect::height)
+        .def_readwrite("left", &pag::Rect::left)
+        .def_readwrite("top", &pag::Rect::top)
+        .def_readwrite("right", &pag::Rect::right)
+        .def_readwrite("bottom", &pag::Rect::bottom)
+        .def("__repr__", [](const pag::Rect& r) {
+            return "Rect(left=" + std::to_string(r.left) + ", top=" + std::to_string(r.top) +
+                   ", right=" + std::to_string(r.right) + ", bottom=" + std::to_string(r.bottom) + ")";
+        });
 
     py::class_<pag::Color>(m, "Color")
         .def(py::init<>())

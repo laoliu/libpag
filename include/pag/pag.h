@@ -791,6 +791,51 @@ class PAG_API PAGImageLayer : public PAGLayer {
    */
   std::shared_ptr<PAGImage> getReplacedImage() const;
 
+  /**
+   * Returns the original image bounds (width and height) from the layer's imageBytes.
+   * This method returns the original placeholder image dimensions from the PAG file,
+   * which is useful for maintaining aspect ratio when replacing images.
+   * 
+   * @return Rect The original image bounds with width and height.
+   */
+  Rect getOriginalImageBounds() const;
+
+  /**
+   * Returns the original image transform information including position, scale, and anchor.
+   * This method provides access to the original transformation matrix used for the placeholder image.
+   * 
+   * The transform includes:
+   * - anchorX, anchorY: The anchor point offset (in pixels)
+   * - scaleFactor: The scale factor applied to the image (ranges from 0.0 to positive values)
+   * - width, height: The original image dimensions
+   * 
+   * This is particularly useful when replacing images for the first time, as getReplacedImage()
+   * returns nullptr in that case, making it impossible to get the transformation information.
+   * 
+   * @return Matrix A matrix representing the original image transformation.
+   *         The matrix combines scale (1/scaleFactor) and translation (-anchorX, -anchorY).
+   */
+  Matrix getOriginalImageMatrix() const;
+
+  /**
+   * Returns the original image scale factor from the layer's imageBytes.
+   * The scale factor indicates how the image should be scaled relative to its original size.
+   * 
+   * @return float The original scale factor (typically ranges from 0.0 to positive values).
+   *         Higher values mean the image will be displayed smaller.
+   *         The actual display size = imageSize / scaleFactor
+   */
+  float getOriginalScaleFactor() const;
+
+  /**
+   * Returns the original image anchor point from the layer's imageBytes.
+   * The anchor point is the reference point for positioning and transformations,
+   * specified in pixels relative to the image's top-left corner.
+   * 
+   * @return Point The anchor point with x and y coordinates in pixels.
+   */
+  Point getOriginalAnchorPoint() const;
+
  protected:
   bool gotoTime(int64_t layerTime) override;
   void setImageInternal(std::shared_ptr<PAGImage> image);
