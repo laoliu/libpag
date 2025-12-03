@@ -232,6 +232,13 @@ void File::setImageData(int index, ByteData* imageBytes, int width, int height) 
     return;
   }
   
+  // 保存原图片的尺寸、锚点和缩放信息，以便替换后保持视觉一致性
+  int oldWidth = oldImageBytes->width;
+  int oldHeight = oldImageBytes->height;
+  int oldAnchorX = oldImageBytes->anchorX;
+  int oldAnchorY = oldImageBytes->anchorY;
+  float oldScaleFactor = oldImageBytes->scaleFactor;
+  
   // 删除旧的 fileBytes
   delete oldImageBytes->fileBytes;
   
@@ -244,16 +251,25 @@ void File::setImageData(int index, ByteData* imageBytes, int width, int height) 
   oldImageBytes->width = width;
   oldImageBytes->height = height;
   
-  // 尝试从 WebP 数据中获取实际的编码尺寸，如果不是 WebP 格式则使用传入的尺寸
-  int encodedWidth = 0, encodedHeight = 0;
-  if (WebPGetInfo(oldImageBytes->fileBytes->data(), oldImageBytes->fileBytes->length(),
-                  &encodedWidth, &encodedHeight)) {
-    // WebP 编码尺寸应该等于 width * scaleFactor 和 height * scaleFactor
-    // 这里我们假设 scaleFactor 为 1.0（对于替换图片通常是这样的）
-    oldImageBytes->scaleFactor = 1.0f;
+  // 恢复锚点信息（保持图片在合成中的位置）
+  oldImageBytes->anchorX = oldAnchorX;
+  oldImageBytes->anchorY = oldAnchorY;
+  
+  // 重新计算缩放因子，以保持相同的显示尺寸
+  // 显示宽度 = width / scaleFactor，要保持显示尺寸不变：
+  // oldWidth / oldScaleFactor = newWidth / newScaleFactor
+  // 因此：newScaleFactor = oldScaleFactor * (newWidth / oldWidth)
+  if (oldScaleFactor > 0.0f && oldWidth > 0 && oldHeight > 0) {
+    // 使用宽度比例调整 scaleFactor
+    float widthRatio = static_cast<float>(width) / static_cast<float>(oldWidth);
+    oldImageBytes->scaleFactor = oldScaleFactor * widthRatio;
+    
+    // 确保 scaleFactor 大于 0（移除上限限制，允许 > 1.0）
+    if (oldImageBytes->scaleFactor <= 0.0f) {
+      oldImageBytes->scaleFactor = 0.01f;
+    }
   } else {
-    // 如果不是 WebP 格式（例如 JPEG, PNG），也设置 scaleFactor 为 1.0
-    // libpag 会在解码时处理这些格式
+    // 如果原始信息无效，则设置为默认值 1.0
     oldImageBytes->scaleFactor = 1.0f;
   }
 }
