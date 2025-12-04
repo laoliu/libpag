@@ -26,6 +26,7 @@ class CMakeBuild(build_ext):
             '-DPAG_BUILD_FRAMEWORK=OFF',
             '-DPAG_BUILD_SHARED=OFF',
             '-DPAG_USE_SWIFTSHADER=OFF',
+            '-DUSE_PREBUILT_LIBPAG=OFF',
         ]
 
         cfg = 'Release' if not self.debug else 'Debug'

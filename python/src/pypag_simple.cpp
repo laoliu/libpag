@@ -91,7 +91,21 @@ PYBIND11_MODULE(pypag, m) {
         .def_static("MakeTrans", &pag::Matrix::MakeTrans)
         .def_static("MakeScale", 
                    py::overload_cast<float, float>(&pag::Matrix::MakeScale))
-        .def("setAffine", &pag::Matrix::setAffine);
+        .def("setAffine", &pag::Matrix::setAffine)
+        .def("getScaleX", &pag::Matrix::getScaleX, "Get horizontal scale factor")
+        .def("getScaleY", &pag::Matrix::getScaleY, "Get vertical scale factor")
+        .def("getSkewX", &pag::Matrix::getSkewX, "Get horizontal skew factor")
+        .def("getSkewY", &pag::Matrix::getSkewY, "Get vertical skew factor")
+        .def("getTranslateX", &pag::Matrix::getTranslateX, "Get horizontal translation")
+        .def("getTranslateY", &pag::Matrix::getTranslateY, "Get vertical translation")
+        .def("__repr__", [](const pag::Matrix& m) {
+            return "Matrix(scaleX=" + std::to_string(m.getScaleX()) +
+                   ", skewX=" + std::to_string(m.getSkewX()) +
+                   ", translateX=" + std::to_string(m.getTranslateX()) +
+                   ", skewY=" + std::to_string(m.getSkewY()) +
+                   ", scaleY=" + std::to_string(m.getScaleY()) +
+                   ", translateY=" + std::to_string(m.getTranslateY()) + ")";
+        });
 
     // 绑定各个模块
     bind_pag_file(m);
