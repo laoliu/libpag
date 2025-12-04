@@ -17,7 +17,8 @@ const demoName = (arch === 'wasm-mt'? 'index': 'index-st');
 require("./update.pag.import");
 
 
-const plugins = [
+// Base plugins without import.meta handling
+const basePlugins = [
   esbuild({ tsconfig: 'tsconfig.json', minify: false }),
   json(),
   resolve({ extensions: ['.ts', '.js'] }),
@@ -25,18 +26,32 @@ const plugins = [
   alias({
     entries: [{ find: '@tgfx', replacement: path.resolve(__dirname, '../../third_party/tgfx/web/src') }],
   }),
-  {
-    name: 'preserve-import-meta-url',
-    resolveImportMeta(property, options) {
-      // Preserve the original behavior of `import.meta.url`.
-      if (property === 'url') {
-        return 'import.meta.url';
-      }
-      return null;
-    },
-  },
 ];
 
+// Plugin for ESM builds: preserve import.meta.url
+const preserveImportMetaPlugin = {
+  name: 'preserve-import-meta-url',
+  resolveImportMeta(property, options) {
+    // Preserve the original behavior of `import.meta.url`.
+    if (property === 'url') {
+      return 'import.meta.url';
+    }
+    return null;
+  },
+};
+
+// Plugin for UMD builds: replace import.meta.url with browser-compatible alternative
+const replaceImportMetaPlugin = {
+  name: 'replace-import-meta-url',
+  resolveImportMeta(property, options) {
+    // Replace import.meta.url with browser-compatible alternative for UMD
+    if (property === 'url') {
+      // Use document.currentScript.src for UMD builds (works in browsers with <script> tags)
+      return '(typeof document !== "undefined" && document.currentScript && document.currentScript.src || new URL("libpag.wasm", typeof globalThis !== "undefined" ? globalThis.location.href : "").href)';
+    }
+    return null;
+  },
+};
 
 const umdConfig = {
   input: 'src/pag.ts',
@@ -50,7 +65,7 @@ const umdConfig = {
       file: `${libPath}/libpag.umd.js`,
     },
   ],
-  plugins: [...plugins],
+  plugins: [...basePlugins, replaceImportMetaPlugin],
 };
 
 const umdMinConfig = {
@@ -65,7 +80,7 @@ const umdMinConfig = {
       file: `${libPath}/libpag.min.js`,
     },
   ],
-  plugins: [...plugins, terser()],
+  plugins: [...basePlugins, replaceImportMetaPlugin, terser()],
 };
 
 export default [
@@ -77,11 +92,11 @@ export default [
       { banner, file: `${libPath}/libpag.esm.js`, format: 'esm', sourcemap: true },
       { banner, file: `${libPath}/libpag.cjs.js`, format: 'cjs', exports: 'auto', sourcemap: true },
     ],
-    plugins: [...plugins],
+    plugins: [...basePlugins, preserveImportMetaPlugin],
   },
   {
     input: `demo/${demoName}.ts`,
     output: { banner, file: `demo/${arch}/libpag.js`, format: 'esm', sourcemap: true },
-    plugins: plugins,
+    plugins: [...basePlugins, preserveImportMetaPlugin],
   },
 ];
