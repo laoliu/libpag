@@ -92,12 +92,13 @@ PYBIND11_MODULE(pypag, m) {
         .def_static("MakeScale", 
                    py::overload_cast<float, float>(&pag::Matrix::MakeScale))
         .def("setAffine", &pag::Matrix::setAffine)
-        .def("getScaleX", &pag::Matrix::getScaleX, "Get horizontal scale factor")
-        .def("getScaleY", &pag::Matrix::getScaleY, "Get vertical scale factor")
-        .def("getSkewX", &pag::Matrix::getSkewX, "Get horizontal skew factor")
-        .def("getSkewY", &pag::Matrix::getSkewY, "Get vertical skew factor")
-        .def("getTranslateX", &pag::Matrix::getTranslateX, "Get horizontal translation")
-        .def("getTranslateY", &pag::Matrix::getTranslateY, "Get vertical translation")
+        // 使用 lambda 包装来确保正确调用
+        .def("getScaleX", [](const pag::Matrix& m) -> float { return m.getScaleX(); }, "Get horizontal scale factor")
+        .def("getScaleY", [](const pag::Matrix& m) -> float { return m.getScaleY(); }, "Get vertical scale factor")
+        .def("getSkewX", [](const pag::Matrix& m) -> float { return m.getSkewX(); }, "Get horizontal skew factor")
+        .def("getSkewY", [](const pag::Matrix& m) -> float { return m.getSkewY(); }, "Get vertical skew factor")
+        .def("getTranslateX", [](const pag::Matrix& m) -> float { return m.getTranslateX(); }, "Get horizontal translation")
+        .def("getTranslateY", [](const pag::Matrix& m) -> float { return m.getTranslateY(); }, "Get vertical translation")
         .def("__repr__", [](const pag::Matrix& m) {
             return "Matrix(scaleX=" + std::to_string(m.getScaleX()) +
                    ", skewX=" + std::to_string(m.getSkewX()) +
