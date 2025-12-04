@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.13)
 project(PAG)
-# Disable error for the web platform.
-SET_PROPERTY(GLOBAL PROPERTY TARGET_SUPPORTS_SHARED_LIBS true)
 
 # Uncomment the next 4 lines to build libpag for Intel cpus on Apple Silicon devices.
 #if (APPLE AND NOT IOS)

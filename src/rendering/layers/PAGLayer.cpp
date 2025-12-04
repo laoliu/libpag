@@ -207,6 +207,9 @@ Point PAGLayer::getSkew() const {
 void PAGLayer::setSkew(float skewXDegrees, float skewYDegrees) {
   LockGuard autoLock(rootLocker);
   
+  // 2D仿射变换通常只使用 skewX，skewY 参数保留用于未来扩展
+  (void)skewYDegrees;
+  
   // 提取当前的缩放和旋转
   float scaleX = sqrtf(layerMatrix.getScaleX() * layerMatrix.getScaleX() + 
                        layerMatrix.getSkewY() * layerMatrix.getSkewY());
