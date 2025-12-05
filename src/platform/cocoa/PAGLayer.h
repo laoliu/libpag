@@ -28,6 +28,8 @@ typedef NS_ENUM(NSInteger, PAGLayerType) {
   PAGLayerTypeShape,
   PAGLayerTypeImage,
   PAGLayerTypePreCompose,
+  PAGLayerTypeCamera,
+  PAGLayerTypeAdjustment,
 };
 
 @class PAGComposition;

@@ -73,6 +73,10 @@ std::shared_ptr<PAGLayer> PAGFile::BuildPAGLayer(std::shared_ptr<File> file, Lay
       pagLayer = new PAGImageLayer(file, static_cast<ImageLayer*>(layer));
       pagLayer->_editableIndex = file->getEditableIndex(static_cast<ImageLayer*>(layer));
     } break;
+    case LayerType::Adjustment: {
+      // Adjustment layer is treated as a regular PAGLayer
+      pagLayer = new PAGLayer(file, layer);
+    } break;
     case LayerType::PreCompose: {
       if (layer == file->getRootLayer()) {
         pagLayer = new PAGFile(file, static_cast<PreComposeLayer*>(layer));

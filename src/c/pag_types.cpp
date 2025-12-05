@@ -283,6 +283,7 @@ const struct {
     {pag_layer_type_image, pag::LayerType::Image},
     {pag_layer_type_pre_compose, pag::LayerType::PreCompose},
     {pag_layer_type_camera, pag::LayerType::Camera},
+    {pag_layer_type_adjustment, pag::LayerType::Adjustment},
 };
 
 bool FromCLayerType(pag_layer_type cLayerType, pag::LayerType* layerType) {

@@ -1843,6 +1843,18 @@ class PAG_API NullLayer : public Layer {
   RTTR_ENABLE(Layer)
 };
 
+class PAG_API AdjustmentLayer : public Layer {
+ public:
+  /**
+   * The type of the layer.
+   */
+  LayerType type() const override {
+    return LayerType::Adjustment;
+  };
+
+  RTTR_ENABLE(Layer)
+};
+
 class PAG_API SolidLayer : public Layer {
  public:
   LayerType type() const override {

@@ -84,6 +84,7 @@ typedef enum {
   pag_layer_type_image,
   pag_layer_type_pre_compose,
   pag_layer_type_camera,
+  pag_layer_type_adjustment,
 } pag_layer_type;
 
 typedef struct pag_gl_texture_info {

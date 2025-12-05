@@ -430,6 +430,8 @@ std::string JPAGLayerHandle::GetLayerClassName(enum LayerType layerType) {
       return "JPAGShapeLayer";
     case LayerType::Solid:
       return "JPAGSolidLayer";
+    case LayerType::Camera:
+    case LayerType::Adjustment:
     default:
       return GetBaseClassName();
   }

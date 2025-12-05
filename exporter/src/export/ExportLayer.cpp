@@ -250,6 +250,11 @@ static pag::TextLayer* CreateTextLayer(const AEGP_LayerH& layerHandle,
   return layer;
 }
 
+static pag::AdjustmentLayer* CreateAdjustmentLayer(const AEGP_LayerH& layerHandle) {
+  auto layer = new pag::AdjustmentLayer();
+  return layer;
+}
+
 static pag::CameraLayer* CreateCameraLayer(const AEGP_LayerH& layerHandle) {
   auto layer = new pag::CameraLayer();
   layer->cameraOption = GetCameraOption(layerHandle);
@@ -283,6 +288,9 @@ static pag::Layer* ExportLayer(const AEGP_LayerH& layerHandle,
     case ExportLayerType::Text:
       layer = CreateTextLayer(layerHandle, session);
       break;
+    case ExportLayerType::Adjustment:
+      layer = CreateAdjustmentLayer(layerHandle);
+      break;
     case ExportLayerType::Camera:
       layer = CreateCameraLayer(layerHandle);
       break;
@@ -303,10 +311,16 @@ static pag::Layer* ExportLayer(const AEGP_LayerH& layerHandle,
 
 ExportLayerType GetLayerType(const AEGP_LayerH& layerHandle) {
   AEGP_LayerFlags layerFlags = GetLayerFlags(layerHandle);
-  if (layerFlags &
-      (AEGP_LayerFlag_NULL_LAYER | AEGP_LayerFlag_GUIDE_LAYER | AEGP_LayerFlag_ADJUSTMENT_LAYER)) {
+  
+  // Check for adjustment layer first
+  if (layerFlags & AEGP_LayerFlag_ADJUSTMENT_LAYER) {
+    return ExportLayerType::Adjustment;
+  }
+  
+  if (layerFlags & (AEGP_LayerFlag_NULL_LAYER | AEGP_LayerFlag_GUIDE_LAYER)) {
     return ExportLayerType::Null;
   }
+  
   AEGP_ObjectType objectType;
   GetSuites()->LayerSuite6()->AEGP_GetLayerObjectType(layerHandle, &objectType);
   if (objectType == AEGP_ObjectType_VECTOR) {
@@ -451,12 +465,6 @@ std::vector<pag::Layer*> ExportLayers(std::shared_ptr<PAGExportSession> session,
         layer->type() == pag::LayerType::Null || layer->type() == pag::LayerType::Unknown;
     bool isReferenced = IsLayerReferenced(layer->id, layers, nextLayerHasTrackMatte);
     if (isErrorType && (isReferenced || layer->isActive)) {
-      ScopedAssign<pag::ID> layerID(session->layerID, layer->id);
-      AEGP_LayerH layerHandle = session->layerHandleMap[layer->id];
-      auto layerFlags = GetLayerFlags(layerHandle);
-      if (layerFlags & AEGP_LayerFlag_ADJUSTMENT_LAYER) {
-        session->pushWarning(AlertInfoType::AdjustmentLayer);
-      }
       layer->isActive = false;
     }
 

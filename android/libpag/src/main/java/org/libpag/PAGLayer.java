@@ -13,6 +13,8 @@ public class PAGLayer {
     public static final int LayerTypeShape = 4;
     public static final int LayerTypeImage = 5;
     public static final int LayerTypePreCompose = 6;
+    public static final int LayerTypeCamera = 7;
+    public static final int LayerTypeAdjustment = 8;
 
     public PAGLayer(long nativeContext) {
         this.nativeContext = nativeContext;

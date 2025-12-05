@@ -242,6 +242,8 @@ export const enum LayerType {
   Shape,
   Image,
   PreCompose,
+  Camera,
+  Adjustment,
 }
 
 /**

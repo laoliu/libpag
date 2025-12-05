@@ -212,6 +212,9 @@ Layer* ReadLayer(DecodeStream* stream) {
     case LayerType::Null:
       layer = new NullLayer();
       break;
+    case LayerType::Adjustment:
+      layer = new AdjustmentLayer();
+      break;
     case LayerType::Solid:
       layer = new SolidLayer();
       break;

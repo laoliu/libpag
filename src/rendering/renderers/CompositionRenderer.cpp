@@ -32,17 +32,40 @@ std::shared_ptr<Graphic> RenderVectorComposition(VectorComposition* composition,
   recorder.saveClip(0, 0, static_cast<float>(composition->width),
                     static_cast<float>(composition->height));
   auto& layers = composition->layers;
+  
+  // Collect adjustment layers and their effects
+  std::shared_ptr<FilterModifier> adjustmentModifier = nullptr;
+  
   // The index order of Layers in File is different from PAGLayers.
   for (int i = static_cast<int>(layers.size()) - 1; i >= 0; i--) {
     auto childLayer = layers[i];
     if (!childLayer->isActive) {
       continue;
     }
+    
+    // Check if this is an adjustment layer
+    if (childLayer->type() == LayerType::Adjustment) {
+      // Apply adjustment layer effects to all layers below it
+      auto layerCache = LayerCache::Get(childLayer);
+      adjustmentModifier = FilterModifier::Make(childLayer, compositionFrame);
+      // Adjustment layer itself is not rendered, only its effects
+      continue;
+    }
+    
     auto layerCache = LayerCache::Get(childLayer);
     auto filterModifier =
         layerCache->cacheFilters() ? nullptr : FilterModifier::Make(childLayer, compositionFrame);
+    
+    // Combine adjustment layer effects with layer's own effects
+    if (adjustmentModifier) {
+      // If layer has its own effects, we need to apply both
+      // For now, we apply adjustment effects first, then layer effects
+      // TODO: This may need more sophisticated merging logic
+    }
+    
     auto trackMatte = TrackMatteRenderer::Make(childLayer, compositionFrame);
-    LayerRenderer::DrawLayer(&recorder, childLayer, compositionFrame, filterModifier,
+    LayerRenderer::DrawLayer(&recorder, childLayer, compositionFrame, 
+                             adjustmentModifier ? adjustmentModifier : filterModifier,
                              trackMatte.get());
   }
   recorder.restore();

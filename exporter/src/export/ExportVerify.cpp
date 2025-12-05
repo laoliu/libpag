@@ -474,9 +474,7 @@ static void CheckLayerFlags(std::shared_ptr<PAGExportSession> session, pag::Laye
   }
   AEGP_LayerFlags layerFlags;
   Suites->LayerSuite6()->AEGP_GetLayerFlags(layerHandle, &layerFlags);
-  if (layerFlags & AEGP_LayerFlag_ADJUSTMENT_LAYER) {
-    session->pushWarning(AlertInfoType::AdjustmentLayer);
-  }
+  // Adjustment layer is now supported, no need to warn
   if (layerFlags & AEGP_LayerFlag_TIME_REMAPPING) {
     session->pushWarning(AlertInfoType::LayerTimeRemapping);
   }

@@ -78,5 +78,7 @@ void bind_pag_layer(py::module& m) {
         .value("Shape", pag::LayerType::Shape)
         .value("Image", pag::LayerType::Image)
         .value("PreCompose", pag::LayerType::PreCompose)
+        .value("Camera", pag::LayerType::Camera)
+        .value("Adjustment", pag::LayerType::Adjustment)
         .export_values();
 }

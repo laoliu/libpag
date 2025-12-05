@@ -1376,6 +1376,7 @@ enum class RTTR_AUTO_REGISTER_CLASS LayerType {
   Image,
   PreCompose,
   Camera,
+  Adjustment,
 };
 
 /**

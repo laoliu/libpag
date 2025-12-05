@@ -44,6 +44,8 @@ if (MSVC)
     add_compile_options("/utf-8")
     add_compile_options(/GR-)
     add_compile_options(/bigobj)
+    # Fix for AE SDK DirectXUtils.cpp Unicode issue
+    add_definitions(-DUNICODE -D_UNICODE)
 endif (MSVC)
 
 # Sets flags
@@ -124,6 +126,8 @@ if (APPLE)
     list(APPEND libs ${CMAKE_CURRENT_SOURCE_DIR}/vendor/ffaudio/mac/${ARCH}/libffaudio.dylib)
 elseif (WIN32)
     list(APPEND libs ${CMAKE_CURRENT_SOURCE_DIR}/vendor/ffaudio/win/x64/ffaudio.lib)
+    # Add DirectX libraries for AE SDK DirectXUtils.cpp
+    list(APPEND libs d3d11.lib dxgi.lib d3dcompiler.lib)
 endif ()
 
 set(PAG_USE_QT ON)
@@ -169,6 +173,11 @@ endif ()
 target_include_directories(PAGExporter SYSTEM PRIVATE ${PAG_EXPORTER_THIRD_PARTY_INCLUDES})
 target_include_directories(PAGExporter PUBLIC ${PAG_EXPORTER_INCLUDES})
 target_link_libraries(PAGExporter ${libs})
+
+if (MSVC)
+    # Force linking of the entire static library on Windows
+    target_link_options(PAGExporter PRIVATE "/WHOLEARCHIVE:${PAG_OUTPUT_LIB}")
+endif ()
 
 if (APPLE)
     target_link_libraries(PAGExporter "-framework AppKit" compression)
@@ -219,6 +228,7 @@ elseif (WIN32)
     set_target_properties(${PROJECT_NAME} PROPERTIES
             SUFFIX ".aex"
     )
+    target_sources(${PROJECT_NAME} PRIVATE PAGExporter.def)
     add_custom_command(
             OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/PAGExporterPiPL.rc
             COMMAND cl /I ${AE_SDK_PATH}/Headers /EP ${CMAKE_CURRENT_SOURCE_DIR}/PAGExporterPiPL.r > ${CMAKE_CURRENT_BINARY_DIR}/PAGExporterPiPL.rr

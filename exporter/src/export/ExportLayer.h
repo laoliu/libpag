@@ -29,6 +29,7 @@ namespace exporter {
 enum class ExportLayerType {
   Unknown,
   Null,
+  Adjustment,
   Solid,
   Text,
   Shape,
