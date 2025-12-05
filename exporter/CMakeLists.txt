@@ -222,6 +222,7 @@ if (APPLE)
 elseif (WIN32)
     set_target_properties(${PROJECT_NAME} PROPERTIES
             SUFFIX ".aex"
+            LINK_FLAGS "/SUBSYSTEM:WINDOWS"
     )
     target_sources(${PROJECT_NAME} PRIVATE PAGExporter.def)
     add_custom_command(
