@@ -174,11 +174,6 @@ target_include_directories(PAGExporter SYSTEM PRIVATE ${PAG_EXPORTER_THIRD_PARTY
 target_include_directories(PAGExporter PUBLIC ${PAG_EXPORTER_INCLUDES})
 target_link_libraries(PAGExporter ${libs})
 
-if (MSVC)
-    # Force linking of the entire static library on Windows
-    target_link_options(PAGExporter PRIVATE "/WHOLEARCHIVE:${PAG_OUTPUT_LIB}")
-endif ()
-
 if (APPLE)
     target_link_libraries(PAGExporter "-framework AppKit" compression)
     set_target_properties(PAGExporter PROPERTIES
