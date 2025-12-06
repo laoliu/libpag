@@ -250,7 +250,7 @@ static pag::TextLayer* CreateTextLayer(const AEGP_LayerH& layerHandle,
   return layer;
 }
 
-static pag::AdjustmentLayer* CreateAdjustmentLayer(const AEGP_LayerH& layerHandle) {
+static pag::AdjustmentLayer* CreateAdjustmentLayer(const AEGP_LayerH&) {
   auto layer = new pag::AdjustmentLayer();
   return layer;
 }

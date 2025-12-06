@@ -46,7 +46,6 @@ std::shared_ptr<Graphic> RenderVectorComposition(VectorComposition* composition,
     // Check if this is an adjustment layer
     if (childLayer->type() == LayerType::Adjustment) {
       // Apply adjustment layer effects to all layers below it
-      auto layerCache = LayerCache::Get(childLayer);
       adjustmentModifier = FilterModifier::Make(childLayer, compositionFrame);
       // Adjustment layer itself is not rendered, only its effects
       continue;
