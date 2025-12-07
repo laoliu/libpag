@@ -192,28 +192,25 @@ if (APPLE)
     )
 
     add_custom_command(
-            OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/PAGExporter.rsrc
-            COMMAND Rez -o ${CMAKE_CURRENT_SOURCE_DIR}/PAGExporter.rsrc ${CMAKE_CURRENT_SOURCE_DIR}/PAGExporterPiPL.r
+            OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/PAGExporter.rsrc
+            COMMAND Rez -useDF -d AE_OS_MAC=1 -o ${CMAKE_CURRENT_BINARY_DIR}/PAGExporter.rsrc ${CMAKE_CURRENT_SOURCE_DIR}/PAGExporterPiPL.r
             -i ${AE_SDK_PATH}/Headers
             -i ${AE_SDK_PATH}/Resources
+            -i ${AE_SDK_PATH}/AfterEffectsSDK/Examples/Headers
+            -i ${AE_SDK_PATH}/AfterEffectsSDK/Examples/Resources
             DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/PAGExporterPiPL.r
-            COMMENT "Generating PAGExporter.rsrc"
+            COMMENT "Generating PAGExporter.rsrc with Rez"
             VERBATIM
     )
     add_custom_target(
             GeneratePAGExporterRsrc
-            DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/PAGExporter.rsrc
+            DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/PAGExporter.rsrc
     )
     add_dependencies(PAGExporter GeneratePAGExporterRsrc)
 
-    set(RSRC_FILE ${CMAKE_CURRENT_SOURCE_DIR}/PAGExporter.rsrc)
-    set(RESOURCES_DIR "$<TARGET_BUNDLE_DIR:PAGExporter>/Contents/Resources")
-    add_custom_command(
-            TARGET PAGExporter POST_BUILD
-            COMMAND /bin/sh -c "mkdir -p ${RESOURCES_DIR}"
-            COMMAND /bin/sh -c "cp -r ${RSRC_FILE} ${RESOURCES_DIR}"
-            COMMENT "Copying ${RSRC_FILE} to ${RESOURCES_DIR}"
-            VERBATIM
+    # Embed the PiPL resource into the binary using -sectcreate linker flag
+    target_link_options(PAGExporter PRIVATE
+            -Wl,-sectcreate,__TEXT,__pipl,${CMAKE_CURRENT_BINARY_DIR}/PAGExporter.rsrc
     )
 
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
