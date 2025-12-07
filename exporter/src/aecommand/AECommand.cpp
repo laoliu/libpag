@@ -17,6 +17,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include "AECommand.h"
+#include <fstream>
 #include "export/PAGExport.h"
 #include "platform/PlatformHelper.h"
 #include "ui/AlertInfoModel.h"
@@ -59,6 +60,10 @@ A_Err AECommand::OnClickConfig(AEGP_GlobalRefcon /*globalRefcon*/,
                                AEGP_CommandRefcon /*commandRefcon*/, AEGP_Command command,
                                AEGP_HookPriority /*hookPriority*/, A_Boolean /*alreadyHandled*/,
                                A_Boolean* handled) {
+  std::ofstream log("/tmp/pag_config_click.log", std::ios::app);
+  log << "OnClickConfig called, command=" << command << " PAGConfigCMD=" << PAGConfigCMD << std::endl;
+  log.close();
+  
   A_Err err = A_Err_NONE;
   if (command != PAGConfigCMD) {
     return err;
@@ -72,6 +77,9 @@ A_Err AECommand::OnClickPanel(AEGP_GlobalRefcon /*globalRefcon*/,
                               AEGP_CommandRefcon /*commandRefcon*/, AEGP_Command command,
                               AEGP_HookPriority /*hookPriority*/, A_Boolean /*alreadyHandled*/,
                               A_Boolean* handled) {
+  std::ofstream log("/tmp/pag_panel_click.log", std::ios::app);
+  log << "OnClickPanel called, command=" << command << " PAGPanelCMD=" << PAGPanelCMD << std::endl;
+  log.close();
 
   A_Err err = A_Err_NONE;
   if (command != PAGPanelCMD) {
@@ -87,10 +95,21 @@ A_Err AECommand::OnClickExporter(AEGP_GlobalRefcon /*globalRefcon*/,
                                  AEGP_HookPriority /*hookPriority*/, A_Boolean /*alreadyHandled*/,
                                  A_Boolean* handled) {
   A_Err err = A_Err_NONE;
+  
+  // Debug log
+  std::ofstream log("/tmp/pag_export_click.log", std::ios::app);
+  log << "OnClickExporter called, command=" << command << " PAGExporterCMD=" << PAGExporterCMD << std::endl;
+  
   if (command != PAGExporterCMD) {
+    log << "Command mismatch, returning" << std::endl;
+    log.close();
     return err;
   }
   *handled = TRUE;
+  
+  log << "Calling showExportWindow()" << std::endl;
+  log.close();
+  
   WindowManager::GetInstance().showExportWindow();
   return err;
 }
@@ -99,6 +118,9 @@ A_Err AECommand::OnClickPreview(AEGP_GlobalRefcon /*globalRefcon*/,
                                 AEGP_CommandRefcon /*commandRefcon*/, AEGP_Command command,
                                 AEGP_HookPriority /*hookPriority*/, A_Boolean /*alreadyHandled*/,
                                 A_Boolean* handled) {
+  std::ofstream log("/tmp/pag_preview_click.log", std::ios::app);
+  log << "OnClickPreview called, command=" << command << " PAGPreviewCMD=" << PAGPreviewCMD << std::endl;
+  log.close();
 
   A_Err err = A_Err_NONE;
   if (command != PAGPreviewCMD) {

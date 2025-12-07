@@ -176,7 +176,7 @@ PAGExport::PAGExport(const PAGExportConfigParam& configParam)
     : itemHandle(configParam.activeItemHandle),
       session(
           std::make_shared<PAGExportSession>(configParam.activeItemHandle, configParam.outputPath)),
-      timeSetter(configParam.activeItemHandle, -100.0f) {
+      timeSetter(configParam.activeItemHandle, 0.0f) {
   session->exportAudio = configParam.exportAudio;
   session->hardwareEncode = configParam.hardwareEncode;
   session->exportActually = configParam.exportActually;
@@ -184,25 +184,50 @@ PAGExport::PAGExport(const PAGExportConfigParam& configParam)
 }
 
 bool PAGExport::exportFile() {
+  std::ofstream debugLog("/tmp/pag_exportfile_debug.log", std::ios::app);
+  debugLog << "=== exportFile() called ===" << std::endl;
+  
   if (itemHandle == nullptr || session->outputPath.empty()) {
+    debugLog << "FAIL: itemHandle is null or outputPath is empty" << std::endl;
+    debugLog << "  itemHandle: " << (itemHandle == nullptr ? "null" : "valid") << std::endl;
+    debugLog << "  outputPath: " << session->outputPath << std::endl;
+    debugLog.close();
     return false;
   }
+  debugLog << "itemHandle and outputPath OK" << std::endl;
+  
   auto pagFile = exportAsFile();
   if (pagFile == nullptr) {
+    debugLog << "FAIL: exportAsFile() returned null" << std::endl;
+    debugLog.close();
     return false;
   }
+  debugLog << "exportAsFile() OK" << std::endl;
 
   const auto bytes = pag::Codec::Encode(pagFile);
   if (bytes->length() == 0) {
+    debugLog << "FAIL: Encoded bytes length is 0" << std::endl;
+    debugLog.close();
     return false;
   }
+  debugLog << "Encode OK, bytes length: " << bytes->length() << std::endl;
+  
   if (!ValidatePAGFile(bytes->data(), bytes->length())) {
+    debugLog << "FAIL: ValidatePAGFile failed" << std::endl;
+    debugLog.close();
     return false;
   }
+  debugLog << "ValidatePAGFile OK" << std::endl;
+  
   if (!WriteToFile(session->outputPath, reinterpret_cast<char*>(bytes->data()),
                    static_cast<std::streamsize>(bytes->length()))) {
+    debugLog << "FAIL: WriteToFile failed, path: " << session->outputPath << std::endl;
+    debugLog.close();
     return false;
   }
+  debugLog << "WriteToFile OK" << std::endl;
+  debugLog << "=== Export SUCCESS ===" << std::endl;
+  debugLog.close();
 
   return true;
 }

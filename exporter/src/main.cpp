@@ -39,14 +39,14 @@ extern "C" DllExport A_Err EntryPointFunc(struct SPBasicSuite* suite, A_long maj
                                                       "PAG Config...", AEGP_Menu_PREFS,
                                                       AEGP_MENU_INSERT_AT_BOTTOM));
   ERR(suites->RegisterSuite5()->AEGP_RegisterCommandHook(
-      pluginID, AEGP_HP_BeforeAE, AEGP_Command_ALL, exporter::AECommand::OnClickConfig, nullptr));
+      pluginID, AEGP_HP_BeforeAE, exporter::AECommand::PAGConfigCMD, exporter::AECommand::OnClickConfig, nullptr));
   //PAG File (Panel)...
   ERR(suites->CommandSuite1()->AEGP_GetUniqueCommand(&exporter::AECommand::PAGPanelCMD));
   ERR(suites->CommandSuite1()->AEGP_InsertMenuCommand(exporter::AECommand::PAGPanelCMD,
                                                       "PAG File (Panel)...", AEGP_Menu_EXPORT,
                                                       AEGP_MENU_INSERT_SORTED));
   ERR(suites->RegisterSuite5()->AEGP_RegisterCommandHook(
-      pluginID, AEGP_HP_BeforeAE, AEGP_Command_ALL, exporter::AECommand::OnClickPanel, nullptr));
+      pluginID, AEGP_HP_BeforeAE, exporter::AECommand::PAGPanelCMD, exporter::AECommand::OnClickPanel, nullptr));
 
   // PAG File...
   ERR(suites->CommandSuite1()->AEGP_GetUniqueCommand(&exporter::AECommand::PAGExporterCMD));
@@ -54,7 +54,7 @@ extern "C" DllExport A_Err EntryPointFunc(struct SPBasicSuite* suite, A_long maj
                                                       "PAG File...", AEGP_Menu_EXPORT,
                                                       AEGP_MENU_INSERT_SORTED));
   ERR(suites->RegisterSuite5()->AEGP_RegisterCommandHook(
-      pluginID, AEGP_HP_BeforeAE, AEGP_Command_ALL, exporter::AECommand::OnClickExporter, nullptr));
+      pluginID, AEGP_HP_BeforeAE, exporter::AECommand::PAGExporterCMD, exporter::AECommand::OnClickExporter, nullptr));
 
   // PAG Preview...
   ERR(suites->CommandSuite1()->AEGP_GetUniqueCommand(&exporter::AECommand::PAGPreviewCMD));
@@ -62,7 +62,7 @@ extern "C" DllExport A_Err EntryPointFunc(struct SPBasicSuite* suite, A_long maj
                                                       "PAG Preview...", AEGP_Menu_EXPORT,
                                                       AEGP_MENU_INSERT_SORTED));
   ERR(suites->RegisterSuite5()->AEGP_RegisterCommandHook(
-      pluginID, AEGP_HP_BeforeAE, AEGP_Command_ALL, exporter::AECommand::OnClickPreview, nullptr));
+      pluginID, AEGP_HP_BeforeAE, exporter::AECommand::PAGPreviewCMD, exporter::AECommand::OnClickPreview, nullptr));
 
   ERR(suites->RegisterSuite5()->AEGP_RegisterUpdateMenuHook(
       pluginID, exporter::AECommand::OnUpdateMenu, nullptr));
