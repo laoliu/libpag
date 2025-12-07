@@ -5,7 +5,7 @@
 	<key>CFBundleExecutable</key>
 	<string>PAGExporter</string>
 	<key>CFBundleIdentifier</key>
-	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+	<string>com.tencent.PAGExporter</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
@@ -13,11 +13,11 @@
 	<key>CFBundlePackageType</key>
 	<string>AEgx</string>
 	<key>CFBundleShortVersionString</key>
-	<string>$(CFBundleShortVersion)</string>
+	<string>1.0.0</string>
 	<key>CFBundleSignature</key>
 	<string>FXTC</string>
 	<key>CFBundleVersion</key>
-	<string>$(CFBundleVersion)</string>
+	<string>1.0.0</string>
 	<key>LSRequiresCarbon</key>
 	<true/>
 	<key>NSAppleScriptEnabled</key>

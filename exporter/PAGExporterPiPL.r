@@ -4,7 +4,7 @@
 	#include "AE_General.r"
 #endif
 resource 'PiPL' (16000) {
-	{	/* array properties: 7 elements */
+	{	/* array properties: 5 elements */
 		/* [1] */
 		Kind {
 			AEGP
@@ -29,10 +29,8 @@ resource 'PiPL' (16000) {
 	#endif
 #else
 	#ifdef AE_OS_MAC
-		CodeMachOPowerPC {"EntryPointFunc"},
-		CodeMacIntel32 {"EntryPointFunc"},
 		CodeMacIntel64 {"EntryPointFunc"},
-        CodeMacARM64 {"EntryPointFunc"},
+		CodeMacARM64 {"EntryPointFunc"},
 	#endif
 #endif
 	}

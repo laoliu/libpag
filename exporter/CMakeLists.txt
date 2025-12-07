@@ -213,6 +213,22 @@ if (APPLE)
             -Wl,-sectcreate,__TEXT,__pipl,${CMAKE_CURRENT_BINARY_DIR}/PAGExporter.rsrc
     )
 
+    # Create PkgInfo file for macOS bundle
+    add_custom_command(
+            TARGET PAGExporter POST_BUILD
+            COMMAND printf "AEgxFXTC" > "$<TARGET_BUNDLE_DIR:PAGExporter>/Contents/PkgInfo"
+            COMMENT "Creating PkgInfo file"
+            VERBATIM
+    )
+
+    # Fix Qt dependencies for After Effects plugin
+    add_custom_command(
+            TARGET PAGExporter POST_BUILD
+            COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/scripts/mac/fix_qt_dependencies.sh "$<TARGET_BUNDLE_DIR:PAGExporter>"
+            COMMENT "Fixing Qt framework dependencies for AE plugin..."
+            VERBATIM
+    )
+
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
         add_custom_command(
                 TARGET PAGExporter POST_BUILD
